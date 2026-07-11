@@ -1,0 +1,45 @@
+<Project>
+  <PropertyGroup>
+    <ThinCamRuntimeRoot Condition="'$(ThinCamRuntimeRoot)' == ''">$(MSBuildThisFileDirectory)../runtimes/</ThinCamRuntimeRoot>
+  </PropertyGroup>
+  <!-- Android native libraries need AndroidNativeLibrary items so they are copied into the APK/AAB. -->
+  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'android'">
+    <AndroidNativeLibrary Include="$(ThinCamRuntimeRoot)android-arm64/native/libthincam.so"
+                          Abi="arm64-v8a"
+                          Condition="Exists('$(ThinCamRuntimeRoot)android-arm64/native/libthincam.so')" />
+    <AndroidNativeLibrary Include="$(ThinCamRuntimeRoot)android-x64/native/libthincam.so"
+                          Abi="x86_64"
+                          Condition="Exists('$(ThinCamRuntimeRoot)android-x64/native/libthincam.so')" />
+  </ItemGroup>
+
+  <!-- iOS uses static linking; LibraryImport resolves these symbols through __Internal. -->
+  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'ios' and '$(RuntimeIdentifier)' == 'ios-arm64'">
+    <NativeReference Include="$(ThinCamRuntimeRoot)ios-arm64/native/libthincam.a"
+                     Condition="Exists('$(ThinCamRuntimeRoot)ios-arm64/native/libthincam.a')">
+      <Kind>Static</Kind>
+      <ForceLoad>true</ForceLoad>
+      <IsCxx>true</IsCxx>
+      <Frameworks>AVFoundation CoreMedia CoreVideo Foundation</Frameworks>
+    </NativeReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'ios' and '$(RuntimeIdentifier)' == 'iossimulator-arm64'">
+    <NativeReference Include="$(ThinCamRuntimeRoot)iossimulator-arm64/native/libthincam.a"
+                     Condition="Exists('$(ThinCamRuntimeRoot)iossimulator-arm64/native/libthincam.a')">
+      <Kind>Static</Kind>
+      <ForceLoad>true</ForceLoad>
+      <IsCxx>true</IsCxx>
+      <Frameworks>AVFoundation CoreMedia CoreVideo Foundation</Frameworks>
+    </NativeReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'ios' and '$(RuntimeIdentifier)' == 'iossimulator-x64'">
+    <NativeReference Include="$(ThinCamRuntimeRoot)iossimulator-x64/native/libthincam.a"
+                     Condition="Exists('$(ThinCamRuntimeRoot)iossimulator-x64/native/libthincam.a')">
+      <Kind>Static</Kind>
+      <ForceLoad>true</ForceLoad>
+      <IsCxx>true</IsCxx>
+      <Frameworks>AVFoundation CoreMedia CoreVideo Foundation</Frameworks>
+    </NativeReference>
+  </ItemGroup>
+</Project>

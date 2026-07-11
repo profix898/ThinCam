@@ -1,0 +1,152 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build libv4l-dev
+      - run: ./build/build-linux.sh
+      - name: Verify Linux ABI v2 exports
+        run: |
+          test "$(nm -D --defined-only src/ThinCam/runtimes/linux-x64/native/libthincam.so | awk '$3 ~ /^tc_/ { count++ } END { print count + 0 }')" -eq 12
+          python3 - <<'PY'
+          import ctypes
+          library = ctypes.CDLL("src/ThinCam/runtimes/linux-x64/native/libthincam.so")
+          library.tc_get_abi_version.restype = ctypes.c_uint32
+          assert library.tc_get_abi_version() == 2
+          PY
+      - run: dotnet build src/ThinCam/ThinCam.csproj -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
+      - run: dotnet build samples/ThinCam.Console/ThinCam.Console.csproj -c Release -p:ThinCamTargetFrameworks=net8.0
+      - run: dotnet build src/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
+      - run: dotnet build src/ThinCam.Avalonia/ThinCam.Avalonia.csproj -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
+      - run: dotnet build samples/ThinCam.Demo.Desktop/ThinCam.Demo.Desktop.csproj -c Release -p:ThinCamTargetFrameworks=net8.0
+      - run: dotnet test tests/ThinCam.SkiaSharp.Tests/ThinCam.SkiaSharp.Tests.csproj -c Release -p:ThinCamTargetFrameworks=net8.0
+      - run: dotnet test tests/ThinCam.Avalonia.Tests/ThinCam.Avalonia.Tests.csproj -c Release -p:ThinCamTargetFrameworks=net8.0
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-linux
+          path: src/ThinCam/runtimes/
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - shell: pwsh
+        run: ./build/build-windows.ps1
+      - run: dotnet build src/ThinCam/ThinCam.csproj -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
+      - run: dotnet build src/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
+      - run: dotnet build src/ThinCam.Avalonia/ThinCam.Avalonia.csproj -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
+      - run: dotnet build samples/ThinCam.Demo.Desktop/ThinCam.Demo.Desktop.csproj -c Release -p:ThinCamTargetFrameworks=net8.0
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-windows
+          path: src/ThinCam/runtimes/
+          if-no-files-found: error
+
+  macos:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: brew install ninja
+      - run: ./build/build-apple.sh
+      - run: dotnet build src/ThinCam/ThinCam.csproj -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
+      - run: dotnet build src/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
+      - run: dotnet build src/ThinCam.Avalonia/ThinCam.Avalonia.csproj -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
+      - run: dotnet build samples/ThinCam.Demo.Desktop/ThinCam.Demo.Desktop.csproj -c Release -p:ThinCamTargetFrameworks=net8.0
+      - run: dotnet workload install ios
+      - run: dotnet build src/ThinCam/ThinCam.csproj -c Release -p:ThinCamTargetFrameworks=net10.0-ios -f net10.0-ios -r iossimulator-arm64
+      - run: dotnet build src/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj -c Release -p:ThinCamTargetFrameworks=net10.0-ios -f net10.0-ios -r iossimulator-arm64
+      - run: dotnet build src/ThinCam.Avalonia/ThinCam.Avalonia.csproj -c Release -p:ThinCamTargetFrameworks=net10.0-ios -f net10.0-ios -r iossimulator-arm64
+      - run: dotnet build samples/ThinCam.Demo.iOS/ThinCam.Demo.iOS.csproj -c Release -r iossimulator-arm64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-apple
+          path: src/ThinCam/runtimes/
+          if-no-files-found: error
+
+  android:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "ndk;27.2.12479018" "cmake;3.22.1"
+      - run: echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.2.12479018" >> "$GITHUB_ENV"
+      - run: ./build/build-android.sh
+      - run: dotnet workload install android
+      - run: dotnet build src/ThinCam/ThinCam.csproj -c Release -p:ThinCamTargetFrameworks=net10.0-android -f net10.0-android
+      - run: dotnet build src/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj -c Release -p:ThinCamTargetFrameworks=net10.0-android -f net10.0-android
+      - run: dotnet build src/ThinCam.Avalonia/ThinCam.Avalonia.csproj -c Release -p:ThinCamTargetFrameworks=net10.0-android -f net10.0-android
+      - run: dotnet build samples/ThinCam.Demo.Android/ThinCam.Demo.Android.csproj -c Release
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-android
+          path: src/ThinCam/runtimes/
+          if-no-files-found: error
+
+  package:
+    needs: [linux, windows, macos, android]
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet workload install android ios
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: native-*
+          path: src/ThinCam/runtimes/
+          merge-multiple: true
+      - name: Pack NuGet packages
+        run: ./build/pack.sh
+      - name: Verify package contents
+        run: |
+          test "$(find artifacts/packages -name '*.nupkg' ! -name '*.symbols.nupkg' | wc -l | tr -d ' ')" -eq 3
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          package = next(
+              path
+              for path in Path("artifacts/packages").glob("ThinCam.*.nupkg")
+              if not path.name.startswith(("ThinCam.Avalonia.", "ThinCam.SkiaSharp."))
+          )
+          expected = {
+              "runtimes/linux-x64/native/libthincam.so",
+              "runtimes/win-x64/native/thincam.dll",
+              "runtimes/osx-arm64/native/libthincam.dylib",
+              "runtimes/osx-x64/native/libthincam.dylib",
+              "runtimes/android-arm64/native/libthincam.so",
+              "runtimes/android-x64/native/libthincam.so",
+              "runtimes/ios-arm64/native/libthincam.a",
+              "runtimes/iossimulator-arm64/native/libthincam.a",
+              "runtimes/iossimulator-x64/native/libthincam.a",
+          }
+          with ZipFile(package) as archive:
+              missing = expected.difference(archive.namelist())
+          if missing:
+              raise SystemExit(f"Missing native package assets: {sorted(missing)}")
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error

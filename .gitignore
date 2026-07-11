@@ -1,0 +1,11 @@
+.vs/
+.vscode/
+.idea/
+**/bin/
+**/obj/
+artifacts/*
+!artifacts/.gitkeep
+src/ThinCam/runtimes/
+*.user
+*.suo
+.DS_Store

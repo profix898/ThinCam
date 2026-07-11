@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>$(ThinCamTargetFrameworks)</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>12</LangVersion>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>ThinCam</PackageId>
+    <Description>Thin, platform-native camera frame capture and camera controls for .NET.</Description>
+    <Authors>ThinCam contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>camera;webcam;capture;controls;exposure;focus;zoom;v4l2;media-foundation;avfoundation;camera2</PackageTags>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../build/ThinCam.targets" Pack="true" PackagePath="buildTransitive/ThinCam.targets" />
+    <None Include="runtimes/**/*" Pack="true" PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!--
+    The .NET Android SDK globs **/*.so into AndroidNativeLibrary. The staged
+    runtimes/ tree is not laid out by Android ABI, so the globbed items are
+    removed here and re-added with explicit Abi metadata by ThinCam.targets.
+  -->
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <AndroidNativeLibrary Remove="runtimes/**/*.so" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <ThinCamRuntimeRoot>$(MSBuildProjectDirectory)/runtimes/</ThinCamRuntimeRoot>
+  </PropertyGroup>
+  <Import Project="../../build/ThinCam.targets" Condition="Exists('../../build/ThinCam.targets')" />
+</Project>

@@ -2,71 +2,132 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam", "src\ThinCam\ThinCam.csproj", "{8BDBB790-A28E-4D10-9DC4-52B522E23DB6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam", "Sources\ThinCam\ThinCam.csproj", "{8BDBB790-A28E-4D10-9DC4-52B522E23DB6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam.Console", "samples\ThinCam.Console\ThinCam.Console.csproj", "{E4041420-1C63-47C0-A969-A24AF27B40A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCamDemo.Console", "Samples\ThinCamDemo.Console\ThinCamDemo.Console.csproj", "{E4041420-1C63-47C0-A969-A24AF27B40A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam.SkiaSharp", "src\ThinCam.SkiaSharp\ThinCam.SkiaSharp.csproj", "{9F4CB17A-A65E-43DE-A8DB-986D7CD74B66}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam.SkiaSharp", "Sources\ThinCam.SkiaSharp\ThinCam.SkiaSharp.csproj", "{9F4CB17A-A65E-43DE-A8DB-986D7CD74B66}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam.SkiaSharp.Tests", "tests\ThinCam.SkiaSharp.Tests\ThinCam.SkiaSharp.Tests.csproj", "{A4439499-B7E7-44F7-B05D-E3787848964C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCamTests.SkiaSharp", "Tests\ThinCamTests.SkiaSharp\ThinCamTests.SkiaSharp.csproj", "{A4439499-B7E7-44F7-B05D-E3787848964C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam.Avalonia", "src\ThinCam.Avalonia\ThinCam.Avalonia.csproj", "{02F5168B-E324-489F-8301-09276ACD331A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam.Avalonia", "Sources\ThinCam.Avalonia\ThinCam.Avalonia.csproj", "{02F5168B-E324-489F-8301-09276ACD331A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam.Avalonia.Tests", "tests\ThinCam.Avalonia.Tests\ThinCam.Avalonia.Tests.csproj", "{276E95CE-5D15-4699-A9F0-3F0AD525FD67}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCamTests.Avalonia", "Tests\ThinCamTests.Avalonia\ThinCamTests.Avalonia.csproj", "{276E95CE-5D15-4699-A9F0-3F0AD525FD67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam.Demo", "samples\ThinCam.Demo\ThinCam.Demo.csproj", "{EA0BC63D-050E-481C-8A32-3FF65980ED40}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCamDemo", "Samples\ThinCamDemo\ThinCamDemo.csproj", "{EA0BC63D-050E-481C-8A32-3FF65980ED40}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam.Demo.Desktop", "samples\ThinCam.Demo.Desktop\ThinCam.Demo.Desktop.csproj", "{90B0E1BF-0A63-4401-8BE5-D90333139B68}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCamDemo.Desktop", "Samples\ThinCamDemo.Desktop\ThinCamDemo.Desktop.csproj", "{90B0E1BF-0A63-4401-8BE5-D90333139B68}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam.Demo.Android", "samples\ThinCam.Demo.Android\ThinCam.Demo.Android.csproj", "{65638112-4B1C-4FD7-837C-4DAEB4E730DA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCamDemo.Android", "Samples\ThinCamDemo.Android\ThinCamDemo.Android.csproj", "{65638112-4B1C-4FD7-837C-4DAEB4E730DA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCam.Demo.iOS", "samples\ThinCam.Demo.iOS\ThinCam.Demo.iOS.csproj", "{DCCBFC60-C46F-4951-BE08-1FC28DD7E285}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThinCamDemo.iOS", "Samples\ThinCamDemo.iOS\ThinCamDemo.iOS.csproj", "{DCCBFC60-C46F-4951-BE08-1FC28DD7E285}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sources", "Sources", "{1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1001}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1002}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1003}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1004}"
+	ProjectSection(SolutionItems) = preProject
+		Build\ThinCam.targets = Build\ThinCam.targets
+		Build\build-android.sh = Build\build-android.sh
+		Build\build-apple.sh = Build\build-apple.sh
+		Build\build-linux.sh = Build\build-linux.sh
+		Build\build-windows.ps1 = Build\build-windows.ps1
+		Build\pack.sh = Build\pack.sh
+		Build\run-demo-macos.sh = Build\run-demo-macos.sh
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1005}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		Docs\ABI.md = Docs\ABI.md
+		Docs\API.md = Docs\API.md
+		Docs\ARCHITECTURE.md = Docs\ARCHITECTURE.md
+		Docs\AVALONIA.md = Docs\AVALONIA.md
+		Docs\BUILDING.md = Docs\BUILDING.md
+		Docs\CONTROLS.md = Docs\CONTROLS.md
+		Docs\REVIEW.md = Docs\REVIEW.md
+		Docs\SKIASHARP.md = Docs\SKIASHARP.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Native", "Native", "{1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1006}"
+	ProjectSection(SolutionItems) = preProject
+		Native\include\thincam.h = Native\include\thincam.h
+		Native\common\thincam_common.hpp = Native\common\thincam_common.hpp
+		Native\common\thincam_common.cpp = Native\common\thincam_common.cpp
+		Native\android\CMakeLists.txt = Native\android\CMakeLists.txt
+		Native\android\thincam_android.cpp = Native\android\thincam_android.cpp
+		Native\apple\CMakeLists.txt = Native\apple\CMakeLists.txt
+		Native\apple\thincam_apple.mm = Native\apple\thincam_apple.mm
+		Native\linux\CMakeLists.txt = Native\linux\CMakeLists.txt
+		Native\linux\thincam_linux.cpp = Native\linux\thincam_linux.cpp
+		Native\linux\tests\CMakeLists.txt = Native\linux\tests\CMakeLists.txt
+		Native\linux\tests\pixel_convert_tests.cpp = Native\linux\tests\pixel_convert_tests.cpp
+		Native\windows\CMakeLists.txt = Native\windows\CMakeLists.txt
+		Native\windows\thincam_windows.cpp = Native\windows\thincam_windows.cpp
+	EndProjectSection
 EndProject
 Global
-    GlobalSection(SolutionConfigurationPlatforms) = preSolution
-        Debug|Any CPU = Debug|Any CPU
-        Release|Any CPU = Release|Any CPU
-    EndGlobalSection
-    GlobalSection(ProjectConfigurationPlatforms) = postSolution
-        {8BDBB790-A28E-4D10-9DC4-52B522E23DB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-        {8BDBB790-A28E-4D10-9DC4-52B522E23DB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-        {8BDBB790-A28E-4D10-9DC4-52B522E23DB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {8BDBB790-A28E-4D10-9DC4-52B522E23DB6}.Release|Any CPU.Build.0 = Release|Any CPU
-        {E4041420-1C63-47C0-A969-A24AF27B40A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-        {E4041420-1C63-47C0-A969-A24AF27B40A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-        {E4041420-1C63-47C0-A969-A24AF27B40A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {E4041420-1C63-47C0-A969-A24AF27B40A6}.Release|Any CPU.Build.0 = Release|Any CPU
-        {9F4CB17A-A65E-43DE-A8DB-986D7CD74B66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-        {9F4CB17A-A65E-43DE-A8DB-986D7CD74B66}.Debug|Any CPU.Build.0 = Debug|Any CPU
-        {9F4CB17A-A65E-43DE-A8DB-986D7CD74B66}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {9F4CB17A-A65E-43DE-A8DB-986D7CD74B66}.Release|Any CPU.Build.0 = Release|Any CPU
-        {A4439499-B7E7-44F7-B05D-E3787848964C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-        {A4439499-B7E7-44F7-B05D-E3787848964C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-        {A4439499-B7E7-44F7-B05D-E3787848964C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {A4439499-B7E7-44F7-B05D-E3787848964C}.Release|Any CPU.Build.0 = Release|Any CPU
-        {02F5168B-E324-489F-8301-09276ACD331A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-        {02F5168B-E324-489F-8301-09276ACD331A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-        {02F5168B-E324-489F-8301-09276ACD331A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {02F5168B-E324-489F-8301-09276ACD331A}.Release|Any CPU.Build.0 = Release|Any CPU
-        {276E95CE-5D15-4699-A9F0-3F0AD525FD67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-        {276E95CE-5D15-4699-A9F0-3F0AD525FD67}.Debug|Any CPU.Build.0 = Debug|Any CPU
-        {276E95CE-5D15-4699-A9F0-3F0AD525FD67}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {276E95CE-5D15-4699-A9F0-3F0AD525FD67}.Release|Any CPU.Build.0 = Release|Any CPU
-        {EA0BC63D-050E-481C-8A32-3FF65980ED40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-        {EA0BC63D-050E-481C-8A32-3FF65980ED40}.Debug|Any CPU.Build.0 = Debug|Any CPU
-        {EA0BC63D-050E-481C-8A32-3FF65980ED40}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {EA0BC63D-050E-481C-8A32-3FF65980ED40}.Release|Any CPU.Build.0 = Release|Any CPU
-        {90B0E1BF-0A63-4401-8BE5-D90333139B68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-        {90B0E1BF-0A63-4401-8BE5-D90333139B68}.Debug|Any CPU.Build.0 = Debug|Any CPU
-        {90B0E1BF-0A63-4401-8BE5-D90333139B68}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {90B0E1BF-0A63-4401-8BE5-D90333139B68}.Release|Any CPU.Build.0 = Release|Any CPU
-        {65638112-4B1C-4FD7-837C-4DAEB4E730DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-        {65638112-4B1C-4FD7-837C-4DAEB4E730DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-        {65638112-4B1C-4FD7-837C-4DAEB4E730DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {65638112-4B1C-4FD7-837C-4DAEB4E730DA}.Release|Any CPU.Build.0 = Release|Any CPU
-        {DCCBFC60-C46F-4951-BE08-1FC28DD7E285}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-        {DCCBFC60-C46F-4951-BE08-1FC28DD7E285}.Debug|Any CPU.Build.0 = Debug|Any CPU
-        {DCCBFC60-C46F-4951-BE08-1FC28DD7E285}.Release|Any CPU.ActiveCfg = Release|Any CPU
-        {DCCBFC60-C46F-4951-BE08-1FC28DD7E285}.Release|Any CPU.Build.0 = Release|Any CPU
-    EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8BDBB790-A28E-4D10-9DC4-52B522E23DB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BDBB790-A28E-4D10-9DC4-52B522E23DB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BDBB790-A28E-4D10-9DC4-52B522E23DB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BDBB790-A28E-4D10-9DC4-52B522E23DB6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4041420-1C63-47C0-A969-A24AF27B40A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4041420-1C63-47C0-A969-A24AF27B40A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4041420-1C63-47C0-A969-A24AF27B40A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4041420-1C63-47C0-A969-A24AF27B40A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F4CB17A-A65E-43DE-A8DB-986D7CD74B66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F4CB17A-A65E-43DE-A8DB-986D7CD74B66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F4CB17A-A65E-43DE-A8DB-986D7CD74B66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F4CB17A-A65E-43DE-A8DB-986D7CD74B66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4439499-B7E7-44F7-B05D-E3787848964C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4439499-B7E7-44F7-B05D-E3787848964C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4439499-B7E7-44F7-B05D-E3787848964C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4439499-B7E7-44F7-B05D-E3787848964C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02F5168B-E324-489F-8301-09276ACD331A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02F5168B-E324-489F-8301-09276ACD331A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02F5168B-E324-489F-8301-09276ACD331A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02F5168B-E324-489F-8301-09276ACD331A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{276E95CE-5D15-4699-A9F0-3F0AD525FD67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{276E95CE-5D15-4699-A9F0-3F0AD525FD67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{276E95CE-5D15-4699-A9F0-3F0AD525FD67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{276E95CE-5D15-4699-A9F0-3F0AD525FD67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA0BC63D-050E-481C-8A32-3FF65980ED40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA0BC63D-050E-481C-8A32-3FF65980ED40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA0BC63D-050E-481C-8A32-3FF65980ED40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA0BC63D-050E-481C-8A32-3FF65980ED40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90B0E1BF-0A63-4401-8BE5-D90333139B68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90B0E1BF-0A63-4401-8BE5-D90333139B68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90B0E1BF-0A63-4401-8BE5-D90333139B68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90B0E1BF-0A63-4401-8BE5-D90333139B68}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65638112-4B1C-4FD7-837C-4DAEB4E730DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65638112-4B1C-4FD7-837C-4DAEB4E730DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65638112-4B1C-4FD7-837C-4DAEB4E730DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65638112-4B1C-4FD7-837C-4DAEB4E730DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCCBFC60-C46F-4951-BE08-1FC28DD7E285}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCCBFC60-C46F-4951-BE08-1FC28DD7E285}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCCBFC60-C46F-4951-BE08-1FC28DD7E285}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCCBFC60-C46F-4951-BE08-1FC28DD7E285}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8BDBB790-A28E-4D10-9DC4-52B522E23DB6} = {1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1001}
+		{9F4CB17A-A65E-43DE-A8DB-986D7CD74B66} = {1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1001}
+		{02F5168B-E324-489F-8301-09276ACD331A} = {1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1001}
+		{E4041420-1C63-47C0-A969-A24AF27B40A6} = {1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1002}
+		{EA0BC63D-050E-481C-8A32-3FF65980ED40} = {1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1002}
+		{90B0E1BF-0A63-4401-8BE5-D90333139B68} = {1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1002}
+		{65638112-4B1C-4FD7-837C-4DAEB4E730DA} = {1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1002}
+		{DCCBFC60-C46F-4951-BE08-1FC28DD7E285} = {1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1002}
+		{A4439499-B7E7-44F7-B05D-E3787848964C} = {1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1003}
+		{276E95CE-5D15-4699-A9F0-3F0AD525FD67} = {1E0C1B7A-6C0F-4E0B-9E4A-2C7E3A5D1003}
+	EndGlobalSection
 EndGlobal

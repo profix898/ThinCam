@@ -1,6 +1,6 @@
 # ThinCam
 
-Thin, platform-native camera frame capture for .NET.
+Thin platform-native camera frame capture for .NET.
 
 ThinCam provides one managed API over the camera frameworks already shipped by Windows, Linux, macOS, Android, and iOS. It returns pooled BGRA32 frames without bundling OpenCV, FFmpeg, GStreamer, MAUI, or AndroidX.
 
@@ -18,14 +18,14 @@ Version 1 produces top-to-bottom BGRA32 frames and exposes capability-driven Exp
 
 ## Documentation
 
-- [Architecture and implementation](docs/ARCHITECTURE.md) — design goals, data flow, managed abstraction, native ABI, every platform backend, threading, ownership, packaging, limitations, and extension strategy.
-- [Building](docs/BUILDING.md) — exact native and `.csproj` build commands, prerequisites, runtime asset staging, mobile workloads, packaging, verification, CI-equivalent commands, and troubleshooting.
-- [Public API](docs/API.md) — permissions, device enumeration, camera lifecycle, frame ownership, controls, errors, and usage patterns.
-- [Camera controls](docs/CONTROLS.md) — capability discovery and the Exposure, Focus, Zoom, and Light implementations on every platform.
-- [SkiaSharp adapter](docs/SKIASHARP.md) — stride-aware bitmap conversion, rotation and mirroring, encoding, reusable preview buffers, and tests.
-- [Avalonia integration](docs/AVALONIA.md) — reusable preview control/source, threading, transforms, desktop/mobile demo heads, permissions, and build/run instructions.
-- [Native ABI](docs/ABI.md) — binary contract, controls, and callback lifetime rules.
-- [Implementation review](docs/REVIEW.md) — validation completed and remaining hardware/toolchain test gaps.
+- [Architecture and implementation](Docs/ARCHITECTURE.md) — design goals, data flow, managed abstraction, native ABI, every platform backend, threading, ownership, packaging, limitations, and extension strategy.
+- [Building](Docs/BUILDING.md) — exact native and `.csproj` build commands, prerequisites, runtime asset staging, mobile workloads, packaging, verification, CI-equivalent commands, and troubleshooting.
+- [Public API](Docs/API.md) — permissions, device enumeration, camera lifecycle, frame ownership, controls, errors, and usage patterns.
+- [Camera controls](Docs/CONTROLS.md) — capability discovery and the Exposure, Focus, Zoom, and Light implementations on every platform.
+- [SkiaSharp adapter](Docs/SKIASHARP.md) — stride-aware bitmap conversion, rotation and mirroring, encoding, reusable preview buffers, and tests.
+- [Avalonia integration](Docs/AVALONIA.md) — reusable preview control/source, threading, transforms, desktop/mobile demo heads, permissions, and build/run instructions.
+- [Native ABI](Docs/ABI.md) — binary contract, controls, and callback lifetime rules.
+- [Implementation review](Docs/REVIEW.md) — validation completed and remaining hardware/toolchain test gaps.
 
 ## Basic use
 
@@ -101,7 +101,7 @@ if (capabilities.Light.IsAvailable)
 }
 ```
 
-Every control is optional. ThinCam exposes actual device ranges and supported modes and returns `NotSupported` when a driver or camera does not provide a requested operation. See [Camera controls](docs/CONTROLS.md) for semantics and platform mappings.
+Every control is optional. ThinCam exposes actual device ranges and supported modes and returns `NotSupported` when a driver or camera does not provide a requested operation. See [Camera controls](Docs/CONTROLS.md) for semantics and platform mappings.
 
 ## Optional SkiaSharp adapter
 
@@ -131,7 +131,7 @@ preview.Update(frame, SkiaFrameTransform.Presentation);
 preview.TryDraw(canvas, destination);
 ```
 
-The adapter respects source stride, keeps alpha opaque, applies optional rotation and mirroring metadata, and supports Skia image encoding. See [SkiaSharp adapter](docs/SKIASHARP.md).
+The adapter respects source stride, keeps alpha opaque, applies optional rotation and mirroring metadata, and supports Skia image encoding. See [SkiaSharp adapter](Docs/SKIASHARP.md).
 
 ## Optional Avalonia preview control
 
@@ -161,7 +161,7 @@ await foreach (VideoFrame frame in camera.GetFramesAsync(token))
 The source uses the reusable Skia double buffer, accepts frames from worker
 threads, and the control coalesces redraws onto Avalonia's UI dispatcher. The
 repository includes a full desktop, Android, and iOS diagnostic demo using this
-control. See [Avalonia integration](docs/AVALONIA.md).
+control. See [Avalonia integration](Docs/AVALONIA.md).
 
 ## Android permission request
 
@@ -205,26 +205,26 @@ Native libraries must be built and staged before building or packaging the manag
 ### Linux
 
 ```bash
-./build/build-linux.sh
+./Build/build-linux.sh
 
-dotnet build src/ThinCam/ThinCam.csproj \
+dotnet build Sources/ThinCam/ThinCam.csproj \
   -c Release \
-  -p:TargetFrameworks=net8.0 \
+  -p:ThinCamTargetFrameworks=net8.0 \
   -f net8.0
 
-dotnet build src/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj \
+dotnet build Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj \
   -c Release \
-  -p:TargetFrameworks=net8.0 \
+  -p:ThinCamTargetFrameworks=net8.0 \
   -f net8.0
 
-dotnet build src/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
+dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
   -c Release \
-  -p:TargetFrameworks=net8.0 \
+  -p:ThinCamTargetFrameworks=net8.0 \
   -f net8.0
 
-LD_LIBRARY_PATH="$PWD/src/ThinCam/runtimes/linux-x64/native${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+LD_LIBRARY_PATH="$PWD/Sources/ThinCam/runtimes/linux-x64/native${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
   dotnet run \
-    --project samples/ThinCam.Console/ThinCam.Console.csproj \
+    --project Samples/ThinCamDemo.Console/ThinCamDemo.Console.csproj \
     -c Release
 ```
 
@@ -233,21 +233,21 @@ LD_LIBRARY_PATH="$PWD/src/ThinCam/runtimes/linux-x64/native${LD_LIBRARY_PATH:+:$
 From a Visual Studio Developer PowerShell:
 
 ```powershell
-./build/build-windows.ps1
+./Build/build-windows.ps1
 
-dotnet build src/ThinCam/ThinCam.csproj `
+dotnet build Sources/ThinCam/ThinCam.csproj `
   -c Release `
-  -p:TargetFrameworks=net8.0 `
+  -p:ThinCamTargetFrameworks=net8.0 `
   -f net8.0
 
-dotnet build src/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj `
+dotnet build Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj `
   -c Release `
-  -p:TargetFrameworks=net8.0 `
+  -p:ThinCamTargetFrameworks=net8.0 `
   -f net8.0
 
-dotnet build src/ThinCam.Avalonia/ThinCam.Avalonia.csproj `
+dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj `
   -c Release `
-  -p:TargetFrameworks=net8.0 `
+  -p:ThinCamTargetFrameworks=net8.0 `
   -f net8.0
 ```
 
@@ -258,24 +258,24 @@ Set `$env:RID = "win-arm64"` before the native script for ARM64.
 On macOS with Xcode, CMake, and Ninja:
 
 ```bash
-./build/build-apple.sh
+./Build/build-apple.sh
 dotnet workload install ios
 
-dotnet build src/ThinCam/ThinCam.csproj \
+dotnet build Sources/ThinCam/ThinCam.csproj \
   -c Release \
-  -p:TargetFrameworks=net10.0-ios \
+  -p:ThinCamTargetFrameworks=net10.0-ios \
   -f net10.0-ios \
   -r iossimulator-arm64
 
-dotnet build src/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj \
+dotnet build Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj \
   -c Release \
-  -p:TargetFrameworks=net10.0-ios \
+  -p:ThinCamTargetFrameworks=net10.0-ios \
   -f net10.0-ios \
   -r iossimulator-arm64
 
-dotnet build src/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
+dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
   -c Release \
-  -p:TargetFrameworks=net10.0-ios \
+  -p:ThinCamTargetFrameworks=net10.0-ios \
   -f net10.0-ios \
   -r iossimulator-arm64
 ```
@@ -286,45 +286,45 @@ macOS desktop uses the `net8.0` ThinCam and ThinCam.SkiaSharp build commands sho
 
 ```bash
 export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
-./build/build-android.sh
+./Build/build-android.sh
 dotnet workload install android
 
-dotnet build src/ThinCam/ThinCam.csproj \
+dotnet build Sources/ThinCam/ThinCam.csproj \
   -c Release \
-  -p:TargetFrameworks=net10.0-android \
+  -p:ThinCamTargetFrameworks=net10.0-android \
   -f net10.0-android
 
-dotnet build src/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj \
+dotnet build Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj \
   -c Release \
-  -p:TargetFrameworks=net10.0-android \
+  -p:ThinCamTargetFrameworks=net10.0-android \
   -f net10.0-android
 
-dotnet build src/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
+dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
   -c Release \
-  -p:TargetFrameworks=net10.0-android \
+  -p:ThinCamTargetFrameworks=net10.0-android \
   -f net10.0-android
 ```
 
-See [docs/BUILDING.md](docs/BUILDING.md) for complete prerequisites, direct CMake commands, all runtime identifiers, package validation, and troubleshooting.
+See [Docs/BUILDING.md](Docs/BUILDING.md) for complete prerequisites, direct CMake commands, all runtime identifiers, package validation, and troubleshooting.
 
 ## Repository layout
 
 ```text
-src/ThinCam/              Managed API, P/Invoke, and runtime assets
-src/ThinCam.SkiaSharp/    Optional SkiaSharp conversion and preview helpers
-src/ThinCam.Avalonia/     Reusable Avalonia preview source and control
-native/include/           Stable versioned C ABI
-native/common/            Shared status and pixel conversion code
-native/windows/           Media Foundation backend
-native/linux/             V4L2 backend and conversion tests
-native/apple/             macOS/iOS AVFoundation backend
-native/android/           Android Camera2 NDK backend
-samples/ThinCam.Console/  Desktop frame-reader sample
-samples/ThinCam.Demo*/    Shared Avalonia demo and desktop/Android/iOS heads
-tests/ThinCam.SkiaSharp.Tests/  Stride, transform, encoding, and buffer tests
-tests/ThinCam.Avalonia.Tests/   Preview-source ownership and transform tests
-build/                    Native build, staging, and pack scripts
-docs/                     Architecture, API, build, ABI, and review docs
+Sources/ThinCam/              Managed API, P/Invoke, and runtime assets
+Sources/ThinCam.SkiaSharp/    Optional SkiaSharp conversion and preview helpers
+Sources/ThinCam.Avalonia/     Reusable Avalonia preview source and control
+Native/include/           Stable versioned C ABI
+Native/common/            Shared status and pixel conversion code
+Native/windows/           Media Foundation backend
+Native/linux/             V4L2 backend and conversion tests
+Native/apple/             macOS/iOS AVFoundation backend
+Native/android/           Android Camera2 NDK backend
+Samples/ThinCamDemo.Console/  Desktop frame-reader sample
+Samples/ThinCamDemo*/    Shared Avalonia demo and desktop/Android/iOS heads
+Tests/ThinCamTests.SkiaSharp/  Stride, transform, encoding, and buffer tests
+Tests/ThinCamTests.Avalonia/   Preview-source ownership and transform tests
+Build/                    Native build, staging, and pack scripts
+Docs/                     Architecture, API, build, ABI, and review docs
 ```
 
 ## Version 1 boundaries

@@ -141,7 +141,7 @@ ThinCam/
 ├── .github/workflows/ci.yml        Cross-platform compilation workflow
 ├── Directory.Build.props           Shared managed build quality settings
 ├── global.json                     Required .NET SDK family
-└── ThinCam.sln                     Managed libraries, tests, and samples
+└── ThinCam.slnx                    Managed libraries, tests, and samples
 ```
 
 ## 4. End-to-end data path

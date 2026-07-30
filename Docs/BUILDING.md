@@ -563,7 +563,7 @@ The `TargetFrameworks` override is important. Without it, the project may try to
 The solution contains the capture library, optional SkiaSharp/Avalonia adapters, tests, console sample, shared Avalonia demo, and platform heads. To avoid mobile target evaluation on a desktop-only machine:
 
 ```bash
-dotnet build ThinCam.sln \
+dotnet build ThinCam.slnx \
   -c Release \
   -p:ThinCamTargetFrameworks=net8.0
 ```

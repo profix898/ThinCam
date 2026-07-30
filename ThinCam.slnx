@@ -1,0 +1,55 @@
+<Solution>
+  <Folder Name="/Build/">
+    <File Path="Build/build-android.sh" />
+    <File Path="Build/build-apple.sh" />
+    <File Path="Build/build-linux.sh" />
+    <File Path="Build/build-windows.ps1" />
+    <File Path="Build/pack.sh" />
+    <File Path="Build/run-demo-macos.sh" />
+    <File Path="Build/ThinCam.targets" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/Docs/">
+    <File Path="Docs/ABI.md" />
+    <File Path="Docs/API.md" />
+    <File Path="Docs/ARCHITECTURE.md" />
+    <File Path="Docs/AVALONIA.md" />
+    <File Path="Docs/BUILDING.md" />
+    <File Path="Docs/CONTROLS.md" />
+    <File Path="Docs/REVIEW.md" />
+    <File Path="Docs/SKIASHARP.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Native/">
+    <File Path="Native/android/CMakeLists.txt" />
+    <File Path="Native/android/thincam_android.cpp" />
+    <File Path="Native/apple/CMakeLists.txt" />
+    <File Path="Native/apple/thincam_apple.mm" />
+    <File Path="Native/common/thincam_common.cpp" />
+    <File Path="Native/common/thincam_common.hpp" />
+    <File Path="Native/include/thincam.h" />
+    <File Path="Native/linux/CMakeLists.txt" />
+    <File Path="Native/linux/tests/CMakeLists.txt" />
+    <File Path="Native/linux/tests/pixel_convert_tests.cpp" />
+    <File Path="Native/linux/thincam_linux.cpp" />
+    <File Path="Native/windows/CMakeLists.txt" />
+    <File Path="Native/windows/thincam_windows.cpp" />
+  </Folder>
+  <Folder Name="/Samples/">
+    <Project Path="Samples/ThinCamDemo.Android/ThinCamDemo.Android.csproj" />
+    <Project Path="Samples/ThinCamDemo.Console/ThinCamDemo.Console.csproj" />
+    <Project Path="Samples/ThinCamDemo.Desktop/ThinCamDemo.Desktop.csproj" />
+    <Project Path="Samples/ThinCamDemo.iOS/ThinCamDemo.iOS.csproj" />
+    <Project Path="Samples/ThinCamDemo/ThinCamDemo.csproj" />
+  </Folder>
+  <Folder Name="/Sources/">
+    <Project Path="Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj" />
+    <Project Path="Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj" />
+    <Project Path="Sources/ThinCam/ThinCam.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/ThinCamTests.Avalonia/ThinCamTests.Avalonia.csproj" />
+    <Project Path="Tests/ThinCamTests.SkiaSharp/ThinCamTests.SkiaSharp.csproj" />
+  </Folder>
+</Solution>

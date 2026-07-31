@@ -17,8 +17,8 @@
     <ProjectReference Include="../ThinCamDemo/ThinCamDemo.csproj" AdditionalProperties="ThinCamTargetFrameworks=net8.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="Exists('../../Sources/ThinCam/runtimes/$(ThinCamDemoRuntimeIdentifier)/native')">
-    <Content Include="../../Sources/ThinCam/runtimes/$(ThinCamDemoRuntimeIdentifier)/native/*"
+  <ItemGroup Condition="Exists('../../Build/Native/runtimes/$(ThinCamDemoRuntimeIdentifier)/native')">
+    <Content Include="../../Build/Native/runtimes/$(ThinCamDemoRuntimeIdentifier)/native/*"
              Link="%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest"
              CopyToPublishDirectory="PreserveNewest" />

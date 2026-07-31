@@ -901,7 +901,7 @@ Applications should avoid blocking the consumer loop if low latency matters. Off
 Native artifacts are staged under:
 
 ```text
-Sources/ThinCam/runtimes/<rid>/native/
+Build/Native/runtimes/<rid>/native/
 ```
 
 Expected runtime identifiers and files are:
@@ -942,7 +942,7 @@ The required order is:
 ```text
 build native backend(s)
         ↓
-stage files under Sources/ThinCam/runtimes
+stage files under Build/Native/runtimes
         ↓
 build desired managed target framework
         ↓

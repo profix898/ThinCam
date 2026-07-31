@@ -1,10 +1,8 @@
 <Solution>
   <Folder Name="/Build/">
-    <File Path="Build/build-android.sh" />
-    <File Path="Build/build-apple.sh" />
     <File Path="Build/build-linux.sh" />
+    <File Path="Build/build-macos.sh" />
     <File Path="Build/build-windows.ps1" />
-    <File Path="Build/pack.sh" />
     <File Path="Build/run-demo-macos.sh" />
     <File Path="Build/ThinCam.targets" />
     <File Path="Directory.Build.props" />

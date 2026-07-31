@@ -3,24 +3,38 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STAGE_ROOT="$ROOT/Build/Native/runtimes"
-RID="${RID:-linux-x64}"
-BUILD_DIR="$ROOT/artifacts/$RID"
-STAGE_DIR="$STAGE_ROOT/$RID/native"
 
-build_linux() {
-  echo "=== Building $RID ==="
-  cmake -S "$ROOT/Native/linux" -B "$BUILD_DIR" -G Ninja -DCMAKE_BUILD_TYPE=Release
-  cmake --build "$BUILD_DIR"
-  mkdir -p "$STAGE_DIR"
-  cp "$BUILD_DIR/libthincam.so" "$STAGE_DIR/libthincam.so"
-  strip --strip-unneeded "$STAGE_DIR/libthincam.so" 2>/dev/null || true
+build_macos() {
+  local arch="$1"
+  local rid="osx-$arch"
+  local build="$ROOT/artifacts/$rid"
+  echo "=== Building macOS $arch ==="
+  cmake -S "$ROOT/Native/apple" -B "$build" -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_OSX_ARCHITECTURES="$arch" \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
+  cmake --build "$build"
+  mkdir -p "$STAGE_ROOT/$rid/native"
+  cp "$build/libthincam.dylib" "$STAGE_ROOT/$rid/native/libthincam.dylib"
+  echo "Staged $STAGE_ROOT/$rid/native/libthincam.dylib"
+}
 
-  echo "=== Running pixel conversion tests ==="
-  cmake -S "$ROOT/Native/linux/tests" -B "$ROOT/artifacts/linux-tests" -G Ninja -DCMAKE_BUILD_TYPE=Release
-  cmake --build "$ROOT/artifacts/linux-tests"
-  "$ROOT/artifacts/linux-tests/pixel_convert_tests"
-
-  echo "Staged $STAGE_DIR/libthincam.so"
+build_ios() {
+  local sdk="$1"
+  local arch="$2"
+  local rid="$3"
+  local build="$ROOT/artifacts/$rid"
+  echo "=== Building iOS $rid ==="
+  cmake -S "$ROOT/Native/apple" -B "$build" -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_SYSTEM_NAME=iOS \
+    -DCMAKE_OSX_SYSROOT="$sdk" \
+    -DCMAKE_OSX_ARCHITECTURES="$arch" \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
+  cmake --build "$build"
+  mkdir -p "$STAGE_ROOT/$rid/native"
+  cp "$build/libthincam.a" "$STAGE_ROOT/$rid/native/libthincam.a"
+  echo "Staged $STAGE_ROOT/$rid/native/libthincam.a"
 }
 
 build_android() {
@@ -62,7 +76,11 @@ pack() {
   dotnet pack "$ROOT/Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj" "${pack_args[@]}"
 }
 
-build_linux
+build_macos arm64
+build_macos x86_64
+build_ios iphoneos arm64 ios-arm64
+build_ios iphonesimulator arm64 iossimulator-arm64
+build_ios iphonesimulator x86_64 iossimulator-x64
 build_android
 pack
 echo "=== Done ==="

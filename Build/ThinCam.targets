@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <ThinCamRuntimeRoot Condition="'$(ThinCamRuntimeRoot)' == ''">$(MSBuildThisFileDirectory)../runtimes/</ThinCamRuntimeRoot>
+    <ThinCamRuntimeRoot Condition="'$(ThinCamRuntimeRoot)' == ''">$(MSBuildThisFileDirectory)Native/runtimes/</ThinCamRuntimeRoot>
   </PropertyGroup>
   <!-- Android native libraries need AndroidNativeLibrary items so they are copied into the APK/AAB. -->
   <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'android'">

@@ -1,0 +1,128 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  native-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r27c
+      - name: Build Windows and Android native libraries and pack
+        shell: pwsh
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: ./Build/build-windows.ps1
+      - name: Upload native artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-windows
+          path: Build/Native/runtimes/win-*/;Build/Native/runtimes/android-*/
+          if-no-files-found: error
+      - name: Upload NuGet packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-windows
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error
+
+  native-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r27c
+      - name: Build Linux and Android native libraries and pack
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: ./Build/build-linux.sh
+      - name: Upload native artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-linux
+          path: Build/Native/runtimes/linux-*/;Build/Native/runtimes/android-*/
+          if-no-files-found: error
+      - name: Upload NuGet packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-linux
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error
+
+  native-apple:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Ninja
+        run: brew install ninja
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r27c
+      - name: Build macOS, iOS and Android native libraries and pack
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: ./Build/build-macos.sh
+      - name: Upload native artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-apple
+          path: Build/Native/runtimes/osx-*/;Build/Native/runtimes/ios*/;Build/Native/runtimes/android-*/
+          if-no-files-found: error
+      - name: Upload NuGet packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-apple
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error
+
+  package:
+    needs: [native-windows, native-linux, native-apple]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all native artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: Build/Native/runtimes
+          pattern: native-*
+          merge-multiple: true
+      - name: Display staged runtimes
+        run: find Build/Native/runtimes -type f
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Pack NuGet packages (all runtimes merged)
+        run: |
+          VERSION="${{ github.ref_name }}"
+          if [[ "$VERSION" == "main" ]]; then VERSION=""; fi
+          if [[ -n "$VERSION" ]]; then
+            export VERSION
+          fi
+          dotnet pack Sources/ThinCam/ThinCam.csproj -c Release -o artifacts/packages ${VERSION:+-p:PackageVersion=$VERSION}
+          dotnet pack Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj -c Release -o artifacts/packages ${VERSION:+-p:PackageVersion=$VERSION}
+          dotnet pack Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj -c Release -o artifacts/packages ${VERSION:+-p:PackageVersion=$VERSION}
+      - name: Upload NuGet packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error

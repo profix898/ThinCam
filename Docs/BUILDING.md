@@ -2,7 +2,7 @@
 
 This guide covers native backend compilation, managed `.csproj` builds, sample execution, runtime asset staging, NuGet packaging, and CI-equivalent commands.
 
-ThinCam is not built as one universal binary. Each native backend must be built on its host platform or with a correctly configured cross toolchain. The resulting native files are staged under `Sources/ThinCam/runtimes/<rid>/native`, after which the managed project can be built and packed.
+ThinCam is not built as one universal binary. Each native backend must be built on its host platform or with a correctly configured cross toolchain. The resulting native files are staged under `Build/Native/runtimes/<rid>/native`, after which the managed project can be built and packed.
 
 ## Contents
 
@@ -26,7 +26,7 @@ ThinCam is not built as one universal binary. Each native backend must be built 
 ```text
 1. Install platform native toolchain
 2. Build native backend
-3. Verify native file is staged under Sources/ThinCam/runtimes
+3. Verify native file is staged under Build/Native/runtimes
 4. Install .NET 10 SDK selected by global.json
 5. Install Android/iOS workloads when building mobile targets
 6. Build the desired ThinCam target framework
@@ -82,7 +82,7 @@ All commands below assume the repository root as the current directory.
 Build scripts stage artifacts into the managed project:
 
 ```text
-Sources/ThinCam/runtimes/<rid>/native/<library>
+Build/Native/runtimes/<rid>/native/<library>
 ```
 
 Expected files are:
@@ -103,13 +103,13 @@ Expected files are:
 Inspect staged files with:
 
 ```bash
-find Sources/ThinCam/runtimes -maxdepth 4 -type f -print
+find Build/Native/runtimes -maxdepth 4 -type f -print
 ```
 
 On PowerShell:
 
 ```powershell
-Get-ChildItem Sources/ThinCam/runtimes -Recurse -File
+Get-ChildItem Build/Native/runtimes -Recurse -File
 ```
 
 ## 4. Linux native backend
@@ -140,7 +140,7 @@ The script:
 
 1. Configures `Native/linux` with Ninja in release mode.
 2. Builds `libthincam.so`.
-3. Copies it to `Sources/ThinCam/runtimes/linux-x64/native/`.
+3. Copies it to `Build/Native/runtimes/linux-x64/native/`.
 4. Strips unneeded symbols when `strip` is available.
 5. Builds `Native/linux/tests`.
 6. Runs `pixel_convert_tests`.
@@ -148,7 +148,7 @@ The script:
 Expected final line:
 
 ```text
-Staged .../Sources/ThinCam/runtimes/linux-x64/native/libthincam.so
+Staged .../Build/Native/runtimes/linux-x64/native/libthincam.so
 ```
 
 ### 4.3 Manual CMake build
@@ -162,9 +162,9 @@ cmake \
 
 cmake --build artifacts/linux-x64
 
-mkdir -p Sources/ThinCam/runtimes/linux-x64/native
+mkdir -p Build/Native/runtimes/linux-x64/native
 cp artifacts/linux-x64/libthincam.so \
-   Sources/ThinCam/runtimes/linux-x64/native/libthincam.so
+   Build/Native/runtimes/linux-x64/native/libthincam.so
 ```
 
 Build and run native conversion tests manually:
@@ -193,8 +193,8 @@ Run that only on a native ARM64 Linux machine, or supply a CMake toolchain file 
 ### 4.5 Verify the library
 
 ```bash
-file Sources/ThinCam/runtimes/linux-x64/native/libthincam.so
-nm -D --defined-only Sources/ThinCam/runtimes/linux-x64/native/libthincam.so | grep ' tc_'
+file Build/Native/runtimes/linux-x64/native/libthincam.so
+nm -D --defined-only Build/Native/runtimes/linux-x64/native/libthincam.so | grep ' tc_'
 ```
 
 Expected ABI exports:
@@ -234,7 +234,7 @@ Run the script from a Visual Studio Developer PowerShell so the C++ compiler and
 This configures a Visual Studio x64 CMake build, builds release configuration, and stages:
 
 ```text
-Sources/ThinCam/runtimes/win-x64/native/thincam.dll
+Build/Native/runtimes/win-x64/native/thincam.dll
 ```
 
 ### 5.3 Build ARM64
@@ -248,7 +248,7 @@ Remove-Item Env:RID
 This selects the Visual Studio `ARM64` generator platform and stages:
 
 ```text
-Sources/ThinCam/runtimes/win-arm64/native/thincam.dll
+Build/Native/runtimes/win-arm64/native/thincam.dll
 ```
 
 ### 5.4 Manual CMake build
@@ -264,11 +264,11 @@ cmake `
 cmake --build artifacts/win-x64 --config Release
 
 New-Item -ItemType Directory -Force `
-  Sources/ThinCam/runtimes/win-x64/native | Out-Null
+  Build/Native/runtimes/win-x64/native | Out-Null
 
 Copy-Item `
   artifacts/win-x64/Release/thincam.dll `
-  Sources/ThinCam/runtimes/win-x64/native/thincam.dll `
+  Build/Native/runtimes/win-x64/native/thincam.dll `
   -Force
 ```
 
@@ -279,7 +279,7 @@ For ARM64, replace `-A x64` with `-A ARM64` and use `win-arm64` paths.
 From a Visual Studio Developer PowerShell:
 
 ```powershell
-dumpbin /exports Sources/ThinCam/runtimes/win-x64/native/thincam.dll
+dumpbin /exports Build/Native/runtimes/win-x64/native/thincam.dll
 ```
 
 Confirm all nine `tc_` ABI symbols are present.
@@ -315,8 +315,8 @@ brew install cmake ninja
 ### 6.2 Build all Apple native artifacts
 
 ```bash
-chmod +x Build/build-apple.sh
-./Build/build-apple.sh
+chmod +x Build/build-macos.sh
+./Build/build-macos.sh
 ```
 
 The script builds:
@@ -345,9 +345,9 @@ cmake \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
 
 cmake --build artifacts/osx-arm64
-mkdir -p Sources/ThinCam/runtimes/osx-arm64/native
+mkdir -p Build/Native/runtimes/osx-arm64/native
 cp artifacts/osx-arm64/libthincam.dylib \
-   Sources/ThinCam/runtimes/osx-arm64/native/libthincam.dylib
+   Build/Native/runtimes/osx-arm64/native/libthincam.dylib
 ```
 
 Intel:
@@ -362,9 +362,9 @@ cmake \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
 
 cmake --build artifacts/osx-x64
-mkdir -p Sources/ThinCam/runtimes/osx-x64/native
+mkdir -p Build/Native/runtimes/osx-x64/native
 cp artifacts/osx-x64/libthincam.dylib \
-   Sources/ThinCam/runtimes/osx-x64/native/libthincam.dylib
+   Build/Native/runtimes/osx-x64/native/libthincam.dylib
 ```
 
 ### 6.4 Build iOS device manually
@@ -381,9 +381,9 @@ cmake \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
 
 cmake --build artifacts/ios-arm64
-mkdir -p Sources/ThinCam/runtimes/ios-arm64/native
+mkdir -p Build/Native/runtimes/ios-arm64/native
 cp artifacts/ios-arm64/libthincam.a \
-   Sources/ThinCam/runtimes/ios-arm64/native/libthincam.a
+   Build/Native/runtimes/ios-arm64/native/libthincam.a
 ```
 
 ### 6.5 Build iOS simulators manually
@@ -425,11 +425,11 @@ Copy each `libthincam.a` into the matching runtime directory.
 ### 6.6 Verify Apple binaries
 
 ```bash
-file Sources/ThinCam/runtimes/osx-arm64/native/libthincam.dylib
-nm -gU Sources/ThinCam/runtimes/osx-arm64/native/libthincam.dylib | grep '_tc_'
+file Build/Native/runtimes/osx-arm64/native/libthincam.dylib
+nm -gU Build/Native/runtimes/osx-arm64/native/libthincam.dylib | grep '_tc_'
 
-file Sources/ThinCam/runtimes/ios-arm64/native/libthincam.a
-nm -gU Sources/ThinCam/runtimes/ios-arm64/native/libthincam.a | grep '_tc_'
+file Build/Native/runtimes/ios-arm64/native/libthincam.a
+nm -gU Build/Native/runtimes/ios-arm64/native/libthincam.a | grep '_tc_'
 ```
 
 ## 7. Android native backend
@@ -468,8 +468,8 @@ sdkmanager \
 ### 7.3 Build all supported Android ABIs
 
 ```bash
-chmod +x Build/build-android.sh
-./Build/build-android.sh
+chmod +x Build/build-macos.sh
+./Build/build-macos.sh
 ```
 
 The script builds API 24 with static libc++ for:
@@ -493,9 +493,9 @@ cmake \
   -DANDROID_STL=c++_static
 
 cmake --build artifacts/android-arm64
-mkdir -p Sources/ThinCam/runtimes/android-arm64/native
+mkdir -p Build/Native/runtimes/android-arm64/native
 cp artifacts/android-arm64/libthincam.so \
-   Sources/ThinCam/runtimes/android-arm64/native/libthincam.so
+   Build/Native/runtimes/android-arm64/native/libthincam.so
 ```
 
 ### 7.5 Manual x64 emulator build
@@ -512,9 +512,9 @@ cmake \
   -DANDROID_STL=c++_static
 
 cmake --build artifacts/android-x64
-mkdir -p Sources/ThinCam/runtimes/android-x64/native
+mkdir -p Build/Native/runtimes/android-x64/native
 cp artifacts/android-x64/libthincam.so \
-   Sources/ThinCam/runtimes/android-x64/native/libthincam.so
+   Build/Native/runtimes/android-x64/native/libthincam.so
 ```
 
 ### 7.6 Verify Android binaries
@@ -530,10 +530,10 @@ Then:
 
 ```bash
 /path/to/llvm-readelf -h \
-  Sources/ThinCam/runtimes/android-arm64/native/libthincam.so
+  Build/Native/runtimes/android-arm64/native/libthincam.so
 
 /path/to/llvm-nm -D --defined-only \
-  Sources/ThinCam/runtimes/android-arm64/native/libthincam.so | grep ' tc_'
+  Build/Native/runtimes/android-arm64/native/libthincam.so | grep ' tc_'
 ```
 
 ## 8. Managed project builds
@@ -585,7 +585,7 @@ Run from the source tree with the staged native directory on the platform loader
 Linux x64:
 
 ```bash
-LD_LIBRARY_PATH="$PWD/Sources/ThinCam/runtimes/linux-x64/native${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+LD_LIBRARY_PATH="$PWD/Build/Native/runtimes/linux-x64/native${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
   dotnet run \
     --project Samples/ThinCamDemo.Console/ThinCamDemo.Console.csproj \
     -c Release
@@ -594,7 +594,7 @@ LD_LIBRARY_PATH="$PWD/Sources/ThinCam/runtimes/linux-x64/native${LD_LIBRARY_PATH
 Windows x64:
 
 ```powershell
-$native = (Resolve-Path "Sources/ThinCam/runtimes/win-x64/native").Path
+$native = (Resolve-Path "Build/Native/runtimes/win-x64/native").Path
 $env:PATH = "$native;$env:PATH"
 dotnet run `
   --project Samples/ThinCamDemo.Console/ThinCamDemo.Console.csproj `
@@ -604,7 +604,7 @@ dotnet run `
 macOS Apple Silicon:
 
 ```bash
-DYLD_LIBRARY_PATH="$PWD/Sources/ThinCam/runtimes/osx-arm64/native${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" \
+DYLD_LIBRARY_PATH="$PWD/Build/Native/runtimes/osx-arm64/native${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" \
   dotnet run \
     --project Samples/ThinCamDemo.Console/ThinCamDemo.Console.csproj \
     -c Release
@@ -747,7 +747,7 @@ Use `win-arm64` after setting `$env:RID = "win-arm64"` before the native build.
 
 #### macOS desktop
 
-A camera-enabled macOS application needs a real application bundle containing `NSCameraUsageDescription`. After `./Build/build-apple.sh`, use the helper:
+A camera-enabled macOS application needs a real application bundle containing `NSCameraUsageDescription`. After `./Build/build-macos.sh`, use the helper:
 
 ```bash
 ./Build/run-demo-macos.sh
@@ -759,7 +759,7 @@ The helper selects `osx-arm64` or `osx-x64`, publishes the desktop head, creates
 
 ```bash
 export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
-./Build/build-android.sh
+./Build/build-macos.sh
 dotnet workload install android
 
 dotnet build \
@@ -772,7 +772,7 @@ Install/run through your normal .NET Android tooling or IDE. The Android head de
 
 #### iOS
 
-On macOS after `./Build/build-apple.sh` and `dotnet workload install ios`:
+On macOS after `./Build/build-macos.sh` and `dotnet workload install ios`:
 
 ```bash
 dotnet build \
@@ -846,7 +846,7 @@ dotnet publish \
   --self-contained false
 
 publish_dir="Samples/ThinCamDemo.Console/bin/Release/net8.0/linux-x64/publish"
-cp Sources/ThinCam/runtimes/linux-x64/native/libthincam.so "$publish_dir/"
+cp Build/Native/runtimes/linux-x64/native/libthincam.so "$publish_dir/"
 ```
 
 Use the corresponding native file and RID on Windows or macOS. Testing the packed package in a clean consumer project is the best verification of release asset selection.
@@ -855,7 +855,7 @@ Use the corresponding native file and RID on Windows or macOS. Testing the packe
 
 ### 10.1 Critical packaging rule
 
-`dotnet pack` includes whatever native files currently exist under `Sources/ThinCam/runtimes`.
+`dotnet pack` includes whatever native files currently exist under `Build/Native/runtimes`.
 
 It does **not** build missing native platforms automatically. Packing on Linux after building only Linux creates a package that lacks Windows, Apple, and Android assets.
 
@@ -864,8 +864,8 @@ Before a full release package, stage every supported native artifact and verify 
 ### 10.2 Pack with the script
 
 ```bash
-chmod +x Build/pack.sh
-VERSION=0.1.0 ./Build/pack.sh
+chmod +x Build/build-macos.sh
+VERSION=0.1.0 ./Build/build-macos.sh
 ```
 
 Output:
@@ -984,7 +984,7 @@ dotnet build Samples/ThinCamDemo.Desktop/ThinCamDemo.Desktop.csproj `
 
 ```bash
 brew install ninja
-./Build/build-apple.sh
+./Build/build-macos.sh
 dotnet workload install ios
 
 dotnet build Sources/ThinCam/ThinCam.csproj \
@@ -1006,7 +1006,7 @@ dotnet build Samples/ThinCamDemo.iOS/ThinCamDemo.iOS.csproj \
 ```bash
 sdkmanager "ndk;27.2.12479018" "cmake;3.22.1"
 export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
-./Build/build-android.sh
+./Build/build-macos.sh
 dotnet workload install android
 
 dotnet build Sources/ThinCam/ThinCam.csproj \
@@ -1033,7 +1033,7 @@ find src samples -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} +
 Do not delete staged runtime libraries unless you intend to rebuild them:
 
 ```bash
-find Sources/ThinCam/runtimes -type f -delete
+find Build/Native/runtimes -type f -delete
 ```
 
 The repository currently contains a staged Linux x64 library. A fully clean source release may choose not to commit generated binaries and instead produce them in release automation.
@@ -1061,7 +1061,7 @@ The native asset was not staged, not selected for the current runtime identifier
 Check:
 
 ```bash
-find Sources/ThinCam/runtimes -type f -print
+find Build/Native/runtimes -type f -print
 ```
 
 Then publish the consuming app with an explicit RID.

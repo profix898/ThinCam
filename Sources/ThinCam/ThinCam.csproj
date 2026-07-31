@@ -19,10 +19,14 @@
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <ThinCamRuntimeRoot>$(MSBuildThisFileDirectory)../../Build/Native/runtimes/</ThinCamRuntimeRoot>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Include="../../README.md" Pack="true" PackagePath="/" />
     <None Include="../../Build/ThinCam.targets" Pack="true" PackagePath="buildTransitive/ThinCam.targets" />
-    <None Include="runtimes/**/*" Pack="true" PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="$(ThinCamRuntimeRoot)**/*" Pack="true" PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!--
@@ -31,11 +35,7 @@
     removed here and re-added with explicit Abi metadata by ThinCam.targets.
   -->
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-    <AndroidNativeLibrary Remove="runtimes/**/*.so" />
+    <AndroidNativeLibrary Remove="$(ThinCamRuntimeRoot)**/*.so" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <ThinCamRuntimeRoot>$(MSBuildProjectDirectory)/runtimes/</ThinCamRuntimeRoot>
-  </PropertyGroup>
   <Import Project="../../Build/ThinCam.targets" Condition="Exists('../../Build/ThinCam.targets')" />
 </Project>

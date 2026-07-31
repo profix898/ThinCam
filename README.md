@@ -222,7 +222,7 @@ dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
   -p:ThinCamTargetFrameworks=net8.0 \
   -f net8.0
 
-LD_LIBRARY_PATH="$PWD/Sources/ThinCam/runtimes/linux-x64/native${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+LD_LIBRARY_PATH="$PWD/Build/Native/runtimes/linux-x64/native${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
   dotnet run \
     --project Samples/ThinCamDemo.Console/ThinCamDemo.Console.csproj \
     -c Release
@@ -258,7 +258,7 @@ Set `$env:RID = "win-arm64"` before the native script for ARM64.
 On macOS with Xcode, CMake, and Ninja:
 
 ```bash
-./Build/build-apple.sh
+./Build/build-macos.sh
 dotnet workload install ios
 
 dotnet build Sources/ThinCam/ThinCam.csproj \
@@ -286,7 +286,7 @@ macOS desktop uses the `net8.0` ThinCam and ThinCam.SkiaSharp build commands sho
 
 ```bash
 export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
-./Build/build-android.sh
+./Build/build-macos.sh
 dotnet workload install android
 
 dotnet build Sources/ThinCam/ThinCam.csproj \

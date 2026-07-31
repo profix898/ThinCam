@@ -519,7 +519,7 @@ or explicit device mapping into a container or sandbox.
 Install the .NET SDK, Xcode command-line tools, CMake, and Ninja, then run:
 
 ```bash
-./Build/build-apple.sh
+./Build/build-macos.sh
 ./Build/run-demo-macos.sh
 ```
 
@@ -532,7 +532,7 @@ signature, and opens the bundle.
 ```bash
 dotnet workload install android
 export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
-./Build/build-android.sh
+./Build/build-macos.sh
 
 dotnet build \
   Samples/ThinCamDemo.Android/ThinCamDemo.Android.csproj \
@@ -543,7 +543,7 @@ dotnet build \
 
 A running emulator or connected device is required for `-t:Run`. Use an arm64
 device or an x64 emulator matching the native libraries produced by
-`build-android.sh`.
+`build-macos.sh`.
 
 ### 10.5 iOS simulator
 
@@ -551,7 +551,7 @@ On macOS:
 
 ```bash
 dotnet workload install ios
-./Build/build-apple.sh
+./Build/build-macos.sh
 
 dotnet build \
   Samples/ThinCamDemo.iOS/ThinCamDemo.iOS.csproj \
@@ -609,7 +609,7 @@ dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
 After all native assets and mobile workloads are available:
 
 ```bash
-VERSION=0.1.0 ./Build/pack.sh
+VERSION=0.1.0 ./Build/build-macos.sh
 ```
 
 This produces `ThinCam`, `ThinCam.SkiaSharp`, and `ThinCam.Avalonia` packages in

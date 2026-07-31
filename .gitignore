@@ -5,7 +5,7 @@
 **/obj/
 artifacts/*
 !artifacts/.gitkeep
-Sources/ThinCam/runtimes/
+Build/Native/runtimes/
 *.user
 *.suo
 .DS_Store

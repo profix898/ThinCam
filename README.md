@@ -285,7 +285,7 @@ macOS desktop uses the `net8.0` ThinCam and ThinCam.SkiaSharp build commands sho
 ### Android native libraries and managed target
 
 ```bash
-export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
+export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
 ./Build/build-macos.sh
 dotnet workload install android
 

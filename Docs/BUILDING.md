@@ -439,14 +439,29 @@ nm -gU Build/Native/runtimes/ios-arm64/native/libthincam.a | grep '_tc_'
 Install:
 
 - Android SDK command-line tools.
-- Android NDK r26 or newer; CI uses `27.2.12479018`.
+- Android NDK r26 or newer; CI uses `r27c`.
 - CMake 3.22 or newer.
 - Ninja.
 
-Set `ANDROID_NDK_HOME` to the NDK root:
+The build scripts discover the NDK automatically and only fall back to the
+steps below when discovery fails. They probe, in order:
+
+1. `ANDROID_NDK_HOME`, if it points at a valid NDK.
+2. `$ANDROID_HOME` / `$ANDROID_SDK_ROOT` and the default SDK locations, using
+   the newest `ndk/<version>` found.
+3. The legacy `ndk-bundle` directory.
+
+On Windows, Ninja is additionally discovered from a Visual Studio installation,
+so an Android build usually needs no setup at all. If no NDK is found the
+Windows script offers to install the pinned revision through `sdkmanager`
+after asking for consent. Use `-InstallNdk` to accept up front, `-NoInstall`
+to refuse, or `-SkipAndroid` (`--skip-android` for the shell scripts) to leave
+the Android libraries out entirely.
+
+To pin the NDK explicitly, set `ANDROID_NDK_HOME` to the NDK root:
 
 ```bash
-export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
+export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
 ```
 
 Confirm the toolchain file exists:
@@ -461,7 +476,7 @@ When `sdkmanager` is available:
 
 ```bash
 sdkmanager \
-  "ndk;27.2.12479018" \
+  "ndk;27.3.13750724" \
   "cmake;3.22.1"
 ```
 
@@ -758,7 +773,7 @@ The helper selects `osx-arm64` or `osx-x64`, publishes the desktop head, creates
 #### Android
 
 ```bash
-export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
+export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
 ./Build/build-macos.sh
 dotnet workload install android
 
@@ -1004,8 +1019,8 @@ dotnet build Samples/ThinCamDemo.iOS/ThinCamDemo.iOS.csproj \
 ### Android job
 
 ```bash
-sdkmanager "ndk;27.2.12479018" "cmake;3.22.1"
-export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
+sdkmanager "ndk;27.3.13750724" "cmake;3.22.1"
+export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
 ./Build/build-macos.sh
 dotnet workload install android
 

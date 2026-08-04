@@ -531,7 +531,7 @@ signature, and opens the bundle.
 
 ```bash
 dotnet workload install android
-export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.2.12479018"
+export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
 ./Build/build-macos.sh
 
 dotnet build \

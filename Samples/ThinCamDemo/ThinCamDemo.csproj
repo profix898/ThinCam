@@ -10,9 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.1.0" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.0" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.0" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
     <ProjectReference Include="../../Sources/ThinCam/ThinCam.csproj" />
     <ProjectReference Include="../../Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj" />
     <ProjectReference Include="../../Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj" />

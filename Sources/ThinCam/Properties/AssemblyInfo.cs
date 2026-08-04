@@ -1,4 +1,4 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("ThinCam.SkiaSharp.Tests")]
-[assembly: InternalsVisibleTo("ThinCam.Avalonia.Tests")]
+[assembly: InternalsVisibleTo("ThinCamTests.SkiaSharp")]
+[assembly: InternalsVisibleTo("ThinCamTests.Avalonia")]

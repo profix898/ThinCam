@@ -6,6 +6,9 @@ STAGE_ROOT="$ROOT/Build/Native/runtimes"
 RID="${RID:-linux-x64}"
 BUILD_DIR="$ROOT/artifacts/$RID"
 STAGE_DIR="$STAGE_ROOT/$RID/native"
+SKIP_PACK=false
+
+[[ "${1:-}" == "--skip-pack" ]] && SKIP_PACK=true
 
 build_linux() {
   echo "=== Building $RID ==="
@@ -64,5 +67,7 @@ pack() {
 
 build_linux
 build_android
-pack
+if [[ "$SKIP_PACK" == "false" ]]; then
+  pack
+fi
 echo "=== Done ==="

@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../ThinCam/ThinCam.csproj" />
-    <PackageReference Include="SkiaSharp" Version="4.150.1" />
+    <PackageReference Include="SkiaSharp" />
   </ItemGroup>
 
   <ItemGroup>

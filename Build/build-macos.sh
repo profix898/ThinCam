@@ -3,6 +3,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STAGE_ROOT="$ROOT/Build/Native/runtimes"
+SKIP_PACK=false
+
+[[ "${1:-}" == "--skip-pack" ]] && SKIP_PACK=true
 
 build_macos() {
   local arch="$1"
@@ -82,5 +85,7 @@ build_ios iphoneos arm64 ios-arm64
 build_ios iphonesimulator arm64 iossimulator-arm64
 build_ios iphonesimulator x86_64 iossimulator-x64
 build_android
-pack
+if [[ "$SKIP_PACK" == "false" ]]; then
+  pack
+fi
 echo "=== Done ==="

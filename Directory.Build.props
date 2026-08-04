@@ -1,10 +1,14 @@
 <Project>
   <!-- GitInfo (SemVer) -->
-  <Target Name="GitInfo">
-    <Exec Command="git rev-parse --short HEAD" ConsoleToMSBuild="true" StandardOutputImportance="low">
+  <Target Name="GitInfo" BeforeTargets="MinVer">
+    <Exec Command="git rev-parse --short HEAD" ConsoleToMSBuild="true" StandardOutputImportance="low" ContinueOnError="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitSHA"/>
     </Exec>
   </Target>
+  <!-- MinVer derives the version from the nearest v* git tag -->
+  <ItemGroup>
+    <PackageReference Include="MinVer" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+  </ItemGroup>
   <PropertyGroup>
     <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
     <MinVerDefaultPreReleaseIdentifiers>dev</MinVerDefaultPreReleaseIdentifiers>
@@ -57,7 +61,7 @@
 	<!-- Packaging -->
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageOutputPath>./../</PackageOutputPath>
+		<!-- Packages are produced explicitly by the Build/ scripts via `dotnet pack -o`. -->
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 	</PropertyGroup>
 </Project>

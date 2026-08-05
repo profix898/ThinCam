@@ -33,13 +33,12 @@ internal static partial class NativeMethods
 
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     [LibraryImport(LibraryName, EntryPoint = "tc_camera_open", StringMarshalling = StringMarshalling.Utf8)]
-    internal static partial NativeStatus CameraOpen(
-        string deviceId,
-        in NativeOpenOptions options,
-        nint frameCallback,
-        nint errorCallback,
-        nint userData,
-        out nint camera);
+    internal static partial NativeStatus CameraOpen(string deviceId,
+                                                    in NativeOpenOptions options,
+                                                    nint frameCallback,
+                                                    nint errorCallback,
+                                                    nint userData,
+                                                    out nint camera);
 
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     [LibraryImport(LibraryName, EntryPoint = "tc_camera_start")]
@@ -55,21 +54,18 @@ internal static partial class NativeMethods
 
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     [LibraryImport(LibraryName, EntryPoint = "tc_camera_get_control_info")]
-    internal static partial NativeStatus CameraGetControlInfo(
-        nint camera,
-        NativeControlId id,
-        out NativeControlInfo info);
+    internal static partial NativeStatus CameraGetControlInfo(nint camera,
+                                                              NativeControlId id,
+                                                              out NativeControlInfo info);
 
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     [LibraryImport(LibraryName, EntryPoint = "tc_camera_get_control")]
-    internal static partial NativeStatus CameraGetControl(
-        nint camera,
-        NativeControlId id,
-        out NativeControlValue value);
+    internal static partial NativeStatus CameraGetControl(nint camera,
+                                                          NativeControlId id,
+                                                          out NativeControlValue value);
 
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     [LibraryImport(LibraryName, EntryPoint = "tc_camera_set_control")]
-    internal static partial NativeStatus CameraSetControl(
-        nint camera,
-        in NativeControlValue value);
+    internal static partial NativeStatus CameraSetControl(nint camera,
+                                                          in NativeControlValue value);
 }

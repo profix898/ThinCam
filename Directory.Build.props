@@ -5,12 +5,8 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="GitSHA"/>
     </Exec>
   </Target>
-  <!-- MinVer derives the version from the nearest v* git tag -->
-  <ItemGroup>
-    <PackageReference Include="MinVer" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
-  </ItemGroup>
   <PropertyGroup>
-    <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
+    <MinVerMinimumMajorMinor>1.0</MinVerMinimumMajorMinor>
     <MinVerDefaultPreReleaseIdentifiers>dev</MinVerDefaultPreReleaseIdentifiers>
     <MinVerBuildMetadata Condition=" '$(Configuration)' == 'Debug' ">$(GitSHA)</MinVerBuildMetadata>
     <MinVerVerbosity>normal</MinVerVerbosity>
@@ -29,17 +25,15 @@
   </Target>
   <!-- Project Defaults  -->
   <PropertyGroup>
-    <LangVersion>13.0</LangVersion>
+    <LangVersion>14.0</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>false</ImplicitUsings>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <AnalysisLevel>latest</AnalysisLevel>
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
     <ThinCamTargetFrameworks Condition="'$(ThinCamTargetFrameworks)' == ''">net8.0;net10.0-android;net10.0-ios</ThinCamTargetFrameworks>
-    <NoWarn>$(NoWarn);1591</NoWarn>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 	<!-- Assembly Info -->
 	<PropertyGroup>
@@ -50,7 +44,7 @@
 		<Description>Thin, platform-native camera frame capture and camera controls for .NET.</Description>
 		<Authors>Thilo Viereck</Authors>
 		<Company></Company>
-		<Copyright>Copyright &#169; Thilo Viereck 2024-$([System.DateTime]::Now.ToString(`yyyy`))</Copyright>
+		<Copyright>Copyright &#169; Thilo Viereck 2026-$([System.DateTime]::Now.ToString(`yyyy`))</Copyright>
 		<DefaultLanguage>en-US</DefaultLanguage>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -58,10 +52,16 @@
     	<RepositoryUrl>https://github.com/profix898/ThinCam</RepositoryUrl>
     	<RepositoryType>git</RepositoryType>
 	</PropertyGroup>
-	<!-- Packaging -->
-	<PropertyGroup>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<!-- Packages are produced explicitly by the Build/ scripts via `dotnet pack -o`. -->
-		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-	</PropertyGroup>
+  <!-- Packaging -->
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageOutputPath>./../</PackageOutputPath>
+  </PropertyGroup>
+  <!-- NuGet Assets -->
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" Visible="false" PackagePath="/" Link="README.md" />
+  </ItemGroup>
 </Project>

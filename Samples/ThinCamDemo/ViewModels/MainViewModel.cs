@@ -4,13 +4,14 @@ using System.Globalization;
 using System.Text;
 using Avalonia.Threading;
 using SkiaSharp;
-using ThinCam.Demo.Infrastructure;
-using ThinCam.Demo.Services;
+using ThinCam;
 using ThinCam.Avalonia;
-using ThinCam.SkiaSharp;
+using ThinCamDemo.Infrastructure;
+using ThinCamDemo.Services;
 
-namespace ThinCam.Demo.ViewModels;
+namespace ThinCamDemo.ViewModels;
 
+/// <summary>Provides camera controls, preview state, and diagnostics for the main view.</summary>
 public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 {
     private readonly IPlatformServices _platformServices;
@@ -26,7 +27,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     private string _statusText = "Ready";
     private string _activeFormatText = "No active format";
     private string _lastError = "None";
-    private string _diagnosticText = string.Empty;
+    private string _diagnosticText = String.Empty;
     private decimal _requestedWidth = 1280;
     private decimal _requestedHeight = 720;
     private decimal _requestedFramesPerSecond = 30;
@@ -69,6 +70,8 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     private long _lastFrameTimestamp;
     private int _disposed;
 
+    /// <summary>Initializes a new main view model.</summary>
+    /// <param name="platformServices">The host-platform services.</param>
     public MainViewModel(IPlatformServices platformServices)
     {
         _platformServices = platformServices ?? throw new ArgumentNullException(nameof(platformServices));
@@ -103,6 +106,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private Func<SaveFileRequest, CancellationToken, Task<bool>>? _saveFileHandler;
 
+    /// <summary>Gets or sets the platform-specific file-save handler.</summary>
     public Func<SaveFileRequest, CancellationToken, Task<bool>>? SaveFileHandler
     {
         get => _saveFileHandler;
@@ -114,285 +118,367 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         }
     }
 
+    /// <summary>Gets the available camera devices.</summary>
     public ObservableCollection<CameraDeviceItem> Devices { get; } = [];
+
+    /// <summary>Gets the supported exposure modes.</summary>
     public ObservableCollection<ExposureMode> ExposureModes { get; } = [];
+
+    /// <summary>Gets the supported focus modes.</summary>
     public ObservableCollection<FocusMode> FocusModes { get; } = [];
+
+    /// <summary>Gets the source that supplies camera preview frames.</summary>
     public CameraPreviewSource PreviewSource { get; }
 
+    /// <summary>Gets the command that requests camera permission.</summary>
     public AsyncCommand RequestPermissionCommand { get; }
+
+    /// <summary>Gets the command that refreshes the camera device list.</summary>
     public AsyncCommand RefreshDevicesCommand { get; }
+
+    /// <summary>Gets the command that opens the selected camera.</summary>
     public AsyncCommand OpenCameraCommand { get; }
+
+    /// <summary>Gets the command that closes the active camera.</summary>
     public AsyncCommand CloseCameraCommand { get; }
+
+    /// <summary>Gets the command that restarts the selected camera.</summary>
     public AsyncCommand RestartCameraCommand { get; }
+
+    /// <summary>Gets the command that refreshes camera capabilities.</summary>
     public AsyncCommand RefreshCapabilitiesCommand { get; }
+
+    /// <summary>Gets the command that refreshes camera control state.</summary>
     public AsyncCommand RefreshControlStateCommand { get; }
+
+    /// <summary>Gets the command that applies the selected exposure mode.</summary>
     public AsyncCommand ApplyExposureModeCommand { get; }
+
+    /// <summary>Gets the command that applies exposure compensation.</summary>
     public AsyncCommand ApplyExposureCompensationCommand { get; }
+
+    /// <summary>Gets the command that applies manual exposure settings.</summary>
     public AsyncCommand ApplyManualExposureCommand { get; }
+
+    /// <summary>Gets the command that applies the selected focus mode.</summary>
     public AsyncCommand ApplyFocusModeCommand { get; }
+
+    /// <summary>Gets the command that applies the manual focus position.</summary>
     public AsyncCommand ApplyFocusPositionCommand { get; }
+
+    /// <summary>Gets the command that applies the zoom factor.</summary>
     public AsyncCommand ApplyZoomCommand { get; }
+
+    /// <summary>Gets the command that applies light settings.</summary>
     public AsyncCommand ApplyLightCommand { get; }
+
+    /// <summary>Gets the command that saves the current preview frame.</summary>
     public AsyncCommand SaveSnapshotCommand { get; }
+
+    /// <summary>Gets the command that exports diagnostic information.</summary>
     public AsyncCommand ExportDiagnosticsCommand { get; }
+
+    /// <summary>Gets the command that clears the diagnostic log.</summary>
     public RelayCommand ClearLogCommand { get; }
 
+    /// <summary>Gets a description of the current platform.</summary>
     public string PlatformDescription => _platformServices.PlatformDescription;
+
+    /// <summary>Gets whether a camera is currently open.</summary>
     public bool IsCameraOpen => _camera is not null;
+
+    /// <summary>Gets the camera permission status as text.</summary>
     public string PermissionStatusText => PermissionStatus.ToString();
 
+    /// <summary>Gets the current camera permission status.</summary>
     public CameraPermissionStatus PermissionStatus
     {
         get => _permissionStatus;
         private set
         {
             if (SetProperty(ref _permissionStatus, value))
-            {
                 OnPropertyChanged(nameof(PermissionStatusText));
-            }
         }
     }
 
+    /// <summary>Gets or sets the selected camera device.</summary>
     public CameraDeviceItem? SelectedDevice
     {
         get => _selectedDevice;
         set
         {
             if (SetProperty(ref _selectedDevice, value))
-            {
                 NotifyCommandStates();
-            }
         }
     }
 
+    /// <summary>Gets the current operation status.</summary>
     public string StatusText
     {
         get => _statusText;
         private set => SetProperty(ref _statusText, value);
     }
 
+    /// <summary>Gets a description of the active frame format.</summary>
     public string ActiveFormatText
     {
         get => _activeFormatText;
         private set => SetProperty(ref _activeFormatText, value);
     }
 
+    /// <summary>Gets the most recent error description.</summary>
     public string LastError
     {
         get => _lastError;
         private set => SetProperty(ref _lastError, value);
     }
 
+    /// <summary>Gets the accumulated diagnostic log.</summary>
     public string DiagnosticText
     {
         get => _diagnosticText;
         private set => SetProperty(ref _diagnosticText, value);
     }
 
+    /// <summary>Gets or sets the requested frame width.</summary>
     public decimal RequestedWidth
     {
         get => _requestedWidth;
         set => SetProperty(ref _requestedWidth, value);
     }
 
+    /// <summary>Gets or sets the requested frame height.</summary>
     public decimal RequestedHeight
     {
         get => _requestedHeight;
         set => SetProperty(ref _requestedHeight, value);
     }
 
+    /// <summary>Gets or sets the requested frame rate.</summary>
     public decimal RequestedFramesPerSecond
     {
         get => _requestedFramesPerSecond;
         set => SetProperty(ref _requestedFramesPerSecond, value);
     }
 
+    /// <summary>Gets or sets the requested frame queue capacity.</summary>
     public decimal QueueCapacity
     {
         get => _queueCapacity;
         set => SetProperty(ref _queueCapacity, value);
     }
 
+    /// <summary>Gets or sets the selected exposure mode.</summary>
     public ExposureMode? SelectedExposureMode
     {
         get => _selectedExposureMode;
         set => SetProperty(ref _selectedExposureMode, value);
     }
 
+    /// <summary>Gets or sets the selected focus mode.</summary>
     public FocusMode? SelectedFocusMode
     {
         get => _selectedFocusMode;
         set => SetProperty(ref _selectedFocusMode, value);
     }
 
+    /// <summary>Gets or sets the requested exposure compensation in EV.</summary>
     public double ExposureCompensation
     {
         get => _exposureCompensation;
         set => SetProperty(ref _exposureCompensation, value);
     }
 
+    /// <summary>Gets the minimum exposure compensation in EV.</summary>
     public double ExposureCompensationMinimum
     {
         get => _exposureCompensationMinimum;
         private set => SetProperty(ref _exposureCompensationMinimum, value);
     }
 
+    /// <summary>Gets the maximum exposure compensation in EV.</summary>
     public double ExposureCompensationMaximum
     {
         get => _exposureCompensationMaximum;
         private set => SetProperty(ref _exposureCompensationMaximum, value);
     }
 
+    /// <summary>Gets the exposure compensation increment in EV.</summary>
     public double ExposureCompensationStep
     {
         get => _exposureCompensationStep;
         private set => SetProperty(ref _exposureCompensationStep, value);
     }
 
+    /// <summary>Gets or sets the requested manual exposure duration in milliseconds.</summary>
     public decimal ManualExposureMilliseconds
     {
         get => _manualExposureMilliseconds;
         set => SetProperty(ref _manualExposureMilliseconds, value);
     }
 
+    /// <summary>Gets or sets the requested manual ISO value.</summary>
     public decimal ManualIso
     {
         get => _manualIso;
         set => SetProperty(ref _manualIso, value);
     }
 
+    /// <summary>Gets or sets the requested manual focus position.</summary>
     public double FocusPosition
     {
         get => _focusPosition;
         set => SetProperty(ref _focusPosition, value);
     }
 
+    /// <summary>Gets or sets the requested zoom factor.</summary>
     public double ZoomFactor
     {
         get => _zoomFactor;
         set => SetProperty(ref _zoomFactor, value);
     }
 
+    /// <summary>Gets the minimum supported zoom factor.</summary>
     public double ZoomMinimum
     {
         get => _zoomMinimum;
         private set => SetProperty(ref _zoomMinimum, value);
     }
 
+    /// <summary>Gets the maximum supported zoom factor.</summary>
     public double ZoomMaximum
     {
         get => _zoomMaximum;
         private set => SetProperty(ref _zoomMaximum, value);
     }
 
+    /// <summary>Gets the supported zoom increment.</summary>
     public double ZoomStep
     {
         get => _zoomStep;
         private set => SetProperty(ref _zoomStep, value);
     }
 
+    /// <summary>Gets or sets whether the camera light should be enabled.</summary>
     public bool LightEnabled
     {
         get => _lightEnabled;
         set => SetProperty(ref _lightEnabled, value);
     }
 
+    /// <summary>Gets or sets the requested camera light level.</summary>
     public double LightLevel
     {
         get => _lightLevel;
         set => SetProperty(ref _lightLevel, value);
     }
 
+    /// <summary>Gets whether exposure modes are available.</summary>
     public bool HasExposureModes
     {
         get => _hasExposureModes;
         private set => SetCapability(ref _hasExposureModes, value);
     }
 
+    /// <summary>Gets whether exposure compensation is available.</summary>
     public bool HasExposureCompensation
     {
         get => _hasExposureCompensation;
         private set => SetCapability(ref _hasExposureCompensation, value);
     }
 
+    /// <summary>Gets whether manual exposure duration is available.</summary>
     public bool HasManualExposure
     {
         get => _hasManualExposure;
         private set => SetCapability(ref _hasManualExposure, value);
     }
 
+    /// <summary>Gets whether manual ISO control is available.</summary>
     public bool HasIso
     {
         get => _hasIso;
         private set => SetProperty(ref _hasIso, value);
     }
 
+    /// <summary>Gets whether focus modes are available.</summary>
     public bool HasFocusModes
     {
         get => _hasFocusModes;
         private set => SetCapability(ref _hasFocusModes, value);
     }
 
+    /// <summary>Gets whether manual focus control is available.</summary>
     public bool HasManualFocus
     {
         get => _hasManualFocus;
         private set => SetCapability(ref _hasManualFocus, value);
     }
 
+    /// <summary>Gets whether zoom control is available.</summary>
     public bool HasZoom
     {
         get => _hasZoom;
         private set => SetCapability(ref _hasZoom, value);
     }
 
+    /// <summary>Gets whether a controllable camera light is available.</summary>
     public bool HasLight
     {
         get => _hasLight;
         private set => SetCapability(ref _hasLight, value);
     }
 
+    /// <summary>Gets whether variable camera light levels are available.</summary>
     public bool HasVariableLight
     {
         get => _hasVariableLight;
         private set => SetProperty(ref _hasVariableLight, value);
     }
 
+    /// <summary>Gets the measured incoming frame rate.</summary>
     public double ReceivedFramesPerSecond
     {
         get => _receivedFramesPerSecond;
         private set => SetProperty(ref _receivedFramesPerSecond, value);
     }
 
+    /// <summary>Gets the measured rendered frame rate.</summary>
     public double RenderedFramesPerSecond
     {
         get => _renderedFramesPerSecond;
         private set => SetProperty(ref _renderedFramesPerSecond, value);
     }
 
+    /// <summary>Gets the total number of received frames.</summary>
     public long TotalFrames
     {
         get => _totalFrames;
         private set => SetProperty(ref _totalFrames, value);
     }
 
+    /// <summary>Gets the total number of rendered frames.</summary>
     public long RenderedFrames
     {
         get => _renderedFrames;
         private set => SetProperty(ref _renderedFrames, value);
     }
 
+    /// <summary>Gets the estimated number of preview frames not rendered.</summary>
     public long PreviewFramesSkipped
     {
         get => _previewFramesSkipped;
         private set => SetProperty(ref _previewFramesSkipped, value);
     }
 
+    /// <summary>Gets the age of the most recently received frame.</summary>
     public string LastFrameAge
     {
         get => _lastFrameAge;
         private set => SetProperty(ref _lastFrameAge, value);
     }
 
+    /// <summary>Records that the preview rendered a frame.</summary>
     public void ReportFrameRendered() => Interlocked.Increment(ref _renderedCounter);
 
     private async Task RequestPermissionAsync(CancellationToken cancellationToken)
@@ -401,8 +487,8 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         {
             StatusText = "Requesting camera permission…";
             PermissionStatus = await _platformServices
-                .RequestCameraPermissionAsync(cancellationToken)
-                .ConfigureAwait(true);
+                                     .RequestCameraPermissionAsync(cancellationToken)
+                                     .ConfigureAwait(true);
             StatusText = $"Permission: {PermissionStatus}";
             Log($"Permission request completed: {PermissionStatus}.");
         }
@@ -417,27 +503,22 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         try
         {
             StatusText = "Enumerating cameras…";
-            IReadOnlyList<CameraDevice> cameras = await Task.Run(
-                () => CameraDevices.Enumerate(),
-                cancellationToken).ConfigureAwait(true);
+            var cameras = await Task.Run(() => CameraDevices.Enumerate(),
+                                         cancellationToken).ConfigureAwait(true);
 
-            string? previousId = SelectedDevice?.Device.Id;
+            var previousId = SelectedDevice?.Device.Id;
             Devices.Clear();
-            foreach (CameraDevice camera in cameras)
-            {
+            foreach (var camera in cameras)
                 Devices.Add(new CameraDeviceItem(camera));
-            }
 
             SelectedDevice = Devices.FirstOrDefault(item => item.Device.Id == previousId)
-                ?? Devices.FirstOrDefault(item => item.Device.IsDefault)
-                ?? Devices.FirstOrDefault();
+                             ?? Devices.FirstOrDefault(item => item.Device.IsDefault)
+                             ?? Devices.FirstOrDefault();
 
             StatusText = $"Found {Devices.Count} camera(s).";
-            Log($"Enumerated {Devices.Count} camera(s)." );
-            foreach (CameraDeviceItem item in Devices)
-            {
+            Log($"Enumerated {Devices.Count} camera(s).");
+            foreach (var item in Devices)
                 Log($"Device: {item.Device.Name}; id={item.Device.Id}; position={item.Device.Position}; default={item.Device.IsDefault}.");
-            }
         }
         catch (Exception exception)
         {
@@ -447,39 +528,34 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private async Task OpenCameraAsync(CancellationToken cancellationToken)
     {
+        // Serialize open, close, restart, and disposal so camera ownership changes atomically.
         await _lifecycleGate.WaitAsync(cancellationToken).ConfigureAwait(true);
         try
         {
             ThrowIfDisposed();
             if (_camera is not null)
-            {
                 return;
-            }
 
             if (SelectedDevice is null)
-            {
                 throw new InvalidOperationException("Select a camera first.");
-            }
 
             PermissionStatus = SafeGetPermissionStatus();
             if (PermissionStatus != CameraPermissionStatus.Granted)
             {
                 PermissionStatus = await _platformServices
-                    .RequestCameraPermissionAsync(cancellationToken)
-                    .ConfigureAwait(true);
+                                         .RequestCameraPermissionAsync(cancellationToken)
+                                         .ConfigureAwait(true);
             }
 
             if (PermissionStatus != CameraPermissionStatus.Granted)
             {
-                throw new CameraException(
-                    CameraErrorCode.PermissionDenied,
-                    $"Camera permission is {PermissionStatus}.");
+                throw new CameraException(CameraErrorCode.PermissionDenied,
+                                          $"Camera permission is {PermissionStatus}.");
             }
 
             var options = new CameraOpenOptions
             {
-                Width = ToPositiveInt(RequestedWidth, nameof(RequestedWidth)),
-                Height = ToPositiveInt(RequestedHeight, nameof(RequestedHeight)),
+                Width = ToPositiveInt(RequestedWidth, nameof(RequestedWidth)), Height = ToPositiveInt(RequestedHeight, nameof(RequestedHeight)),
                 FramesPerSecond = ToPositiveInt(RequestedFramesPerSecond, nameof(RequestedFramesPerSecond)),
                 QueueCapacity = Math.Clamp(ToPositiveInt(QueueCapacity, nameof(QueueCapacity)), 1, 32)
             };
@@ -488,10 +564,9 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             LastError = "None";
             ResetFrameStatistics();
 
-            Camera camera = await Camera.OpenAsync(
-                SelectedDevice.Device,
-                options,
-                cancellationToken).ConfigureAwait(true);
+            var camera = await Camera.OpenAsync(SelectedDevice.Device,
+                                                options,
+                                                cancellationToken).ConfigureAwait(true);
 
             _camera = camera;
             _captureCancellation = new CancellationTokenSource();
@@ -541,7 +616,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private async Task RestartCameraAsync(CancellationToken cancellationToken)
     {
-        bool stopped = false;
+        var stopped = false;
         await _lifecycleGate.WaitAsync(cancellationToken).ConfigureAwait(true);
         try
         {
@@ -558,16 +633,14 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         }
 
         if (stopped)
-        {
             await OpenCameraAsync(cancellationToken).ConfigureAwait(true);
-        }
     }
 
     private async Task StopCameraCoreAsync()
     {
-        Camera? camera = _camera;
-        CancellationTokenSource? cancellation = _captureCancellation;
-        Task? captureTask = _captureTask;
+        var camera = _camera;
+        var cancellation = _captureCancellation;
+        var captureTask = _captureTask;
         _camera = null;
         _captureCancellation = null;
         _captureTask = null;
@@ -608,15 +681,15 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     {
         try
         {
-            await foreach (VideoFrame frame in camera.GetFramesAsync(cancellationToken).ConfigureAwait(false))
+            await foreach (var frame in camera.GetFramesAsync(cancellationToken).ConfigureAwait(false))
             {
+                // Publish copies the pooled frame before this iteration releases its ownership.
                 using (frame)
                 {
-                    PreviewSource.Publish(frame, SkiaFrameTransform.Presentation);
+                    PreviewSource.Publish(frame);
                     Interlocked.Increment(ref _receivedCounter);
                     Interlocked.Exchange(ref _lastFrameTimestamp, Stopwatch.GetTimestamp());
                 }
-
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -630,7 +703,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private async Task RefreshCapabilitiesAsync(CancellationToken cancellationToken)
     {
-        Camera camera = GetOpenCamera();
+        var camera = GetOpenCamera();
         await ReadCapabilitiesAsync(camera, cancellationToken).ConfigureAwait(true);
     }
 
@@ -639,9 +712,9 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         try
         {
             StatusText = "Reading camera capabilities…";
-            CameraCapabilities capabilities = await camera
-                .GetCapabilitiesAsync(cancellationToken)
-                .ConfigureAwait(true);
+            var capabilities = await camera
+                                     .GetCapabilitiesAsync(cancellationToken)
+                                     .ConfigureAwait(true);
             _capabilities = capabilities;
             ApplyCapabilities(capabilities);
             await RefreshControlStateCoreAsync(camera, cancellationToken).ConfigureAwait(true);
@@ -665,24 +738,20 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         {
             if (_capabilities?.Exposure.IsSupported == true)
             {
-                ExposureState exposure = await camera.Controls.Exposure
-                    .GetStateAsync(cancellationToken).ConfigureAwait(true);
+                var exposure = await camera.Controls.Exposure
+                                           .GetStateAsync(cancellationToken).ConfigureAwait(true);
                 SelectedExposureMode = exposure.Mode ?? SelectedExposureMode;
                 ExposureCompensation = exposure.CompensationEv ?? ExposureCompensation;
                 if (exposure.Duration is { } duration)
-                {
-                    ManualExposureMilliseconds = (decimal)duration.TotalMilliseconds;
-                }
+                    ManualExposureMilliseconds = (decimal) duration.TotalMilliseconds;
                 if (exposure.Iso is { } iso)
-                {
-                    ManualIso = (decimal)iso;
-                }
+                    ManualIso = (decimal) iso;
             }
 
             if (_capabilities?.Focus.IsSupported == true)
             {
-                FocusState focus = await camera.Controls.Focus
-                    .GetStateAsync(cancellationToken).ConfigureAwait(true);
+                var focus = await camera.Controls.Focus
+                                        .GetStateAsync(cancellationToken).ConfigureAwait(true);
                 SelectedFocusMode = focus.Mode ?? SelectedFocusMode;
                 FocusPosition = focus.Position ?? FocusPosition;
             }
@@ -690,13 +759,13 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             if (_capabilities?.Zoom.IsSupported == true)
             {
                 ZoomFactor = await camera.Controls.Zoom
-                    .GetFactorAsync(cancellationToken).ConfigureAwait(true);
+                                         .GetFactorAsync(cancellationToken).ConfigureAwait(true);
             }
 
             if (_capabilities?.Light.IsAvailable == true)
             {
-                CameraLightState light = await camera.Controls.Light
-                    .GetStateAsync(cancellationToken).ConfigureAwait(true);
+                var light = await camera.Controls.Light
+                                        .GetStateAsync(cancellationToken).ConfigureAwait(true);
                 LightEnabled = light.IsEnabled ?? LightEnabled;
                 LightLevel = light.Level ?? LightLevel;
             }
@@ -712,83 +781,70 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     private async Task ApplyExposureModeAsync(CancellationToken cancellationToken)
     {
         if (SelectedExposureMode is not { } mode)
-        {
             return;
-        }
 
-        await ExecuteControlAsync(
-            $"Exposure mode {mode}",
-            token => GetOpenCamera().Controls.Exposure.SetModeAsync(mode, token).AsTask(),
-            cancellationToken).ConfigureAwait(true);
+        await ExecuteControlAsync($"Exposure mode {mode}",
+                                  token => GetOpenCamera().Controls.Exposure.SetModeAsync(mode, token).AsTask(),
+                                  cancellationToken).ConfigureAwait(true);
     }
 
-    private Task ApplyExposureCompensationAsync(CancellationToken cancellationToken) =>
-        ExecuteControlAsync(
-            $"Exposure compensation {ExposureCompensation:+0.###;-0.###;0} EV",
-            token => GetOpenCamera().Controls.Exposure
-                .SetCompensationAsync(ExposureCompensation, token).AsTask(),
-            cancellationToken);
+    private Task ApplyExposureCompensationAsync(CancellationToken cancellationToken)
+        => ExecuteControlAsync($"Exposure compensation {ExposureCompensation:+0.###;-0.###;0} EV",
+                               token => GetOpenCamera().Controls.Exposure
+                                                       .SetCompensationAsync(ExposureCompensation, token).AsTask(),
+                               cancellationToken);
 
     private Task ApplyManualExposureAsync(CancellationToken cancellationToken)
     {
-        TimeSpan duration = TimeSpan.FromMilliseconds((double)ManualExposureMilliseconds);
-        double? iso = HasIso ? (double)ManualIso : null;
-        return ExecuteControlAsync(
-            $"Manual exposure {duration.TotalMilliseconds:0.###} ms" +
-            (iso.HasValue ? $", ISO {iso.Value:0.##}" : string.Empty),
-            token => GetOpenCamera().Controls.Exposure
-                .SetManualAsync(duration, iso, token).AsTask(),
-            cancellationToken);
+        var duration = TimeSpan.FromMilliseconds((double) ManualExposureMilliseconds);
+        double? iso = HasIso ? (double) ManualIso : null;
+        return ExecuteControlAsync($"Manual exposure {duration.TotalMilliseconds:0.###} ms" +
+                                   (iso.HasValue ? $", ISO {iso.Value:0.##}" : String.Empty),
+                                   token => GetOpenCamera().Controls.Exposure
+                                                           .SetManualAsync(duration, iso, token).AsTask(),
+                                   cancellationToken);
     }
 
     private async Task ApplyFocusModeAsync(CancellationToken cancellationToken)
     {
         if (SelectedFocusMode is not { } mode)
-        {
             return;
-        }
 
-        await ExecuteControlAsync(
-            $"Focus mode {mode}",
-            token => GetOpenCamera().Controls.Focus.SetModeAsync(mode, token).AsTask(),
-            cancellationToken).ConfigureAwait(true);
+        await ExecuteControlAsync($"Focus mode {mode}",
+                                  token => GetOpenCamera().Controls.Focus.SetModeAsync(mode, token).AsTask(),
+                                  cancellationToken).ConfigureAwait(true);
     }
 
-    private Task ApplyFocusPositionAsync(CancellationToken cancellationToken) =>
-        ExecuteControlAsync(
-            $"Focus position {FocusPosition:0.###}",
-            token => GetOpenCamera().Controls.Focus
-                .SetPositionAsync(FocusPosition, token).AsTask(),
-            cancellationToken);
+    private Task ApplyFocusPositionAsync(CancellationToken cancellationToken)
+        => ExecuteControlAsync($"Focus position {FocusPosition:0.###}",
+                               token => GetOpenCamera().Controls.Focus
+                                                       .SetPositionAsync(FocusPosition, token).AsTask(),
+                               cancellationToken);
 
-    private Task ApplyZoomAsync(CancellationToken cancellationToken) =>
-        ExecuteControlAsync(
-            $"Zoom {ZoomFactor:0.###}×",
-            token => GetOpenCamera().Controls.Zoom
-                .SetFactorAsync(ZoomFactor, token).AsTask(),
-            cancellationToken);
+    private Task ApplyZoomAsync(CancellationToken cancellationToken)
+        => ExecuteControlAsync($"Zoom {ZoomFactor:0.###}×",
+                               token => GetOpenCamera().Controls.Zoom
+                                                       .SetFactorAsync(ZoomFactor, token).AsTask(),
+                               cancellationToken);
 
     private async Task ApplyLightAsync(CancellationToken cancellationToken)
     {
-        Camera camera = GetOpenCamera();
-        await ExecuteControlAsync(
-            $"Light {(LightEnabled ? "enabled" : "disabled")}",
-            token => camera.Controls.Light.SetEnabledAsync(LightEnabled, token).AsTask(),
-            cancellationToken).ConfigureAwait(true);
+        var camera = GetOpenCamera();
+        await ExecuteControlAsync($"Light {(LightEnabled ? "enabled" : "disabled")}",
+                                  token => camera.Controls.Light.SetEnabledAsync(LightEnabled, token).AsTask(),
+                                  cancellationToken).ConfigureAwait(true);
 
         if (LightEnabled && HasVariableLight)
         {
-            await ExecuteControlAsync(
-                $"Light level {LightLevel:0.###}",
-                token => camera.Controls.Light.SetLevelAsync(LightLevel, token).AsTask(),
-                cancellationToken).ConfigureAwait(true);
+            await ExecuteControlAsync($"Light level {LightLevel:0.###}",
+                                      token => camera.Controls.Light.SetLevelAsync(LightLevel, token).AsTask(),
+                                      cancellationToken).ConfigureAwait(true);
         }
     }
 
-    private async Task ExecuteControlAsync(
-        string description,
-        Func<CancellationToken, Task> operation,
-        CancellationToken cancellationToken)
+    private async Task ExecuteControlAsync(string description,
+                                           Func<CancellationToken, Task> operation,
+                                           CancellationToken cancellationToken)
     {
         try
         {
@@ -808,9 +864,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         try
         {
             if (SaveFileHandler is null)
-            {
                 return;
-            }
 
             using SKBitmap? snapshot = PreviewSource.CopySnapshot();
             if (snapshot is null)
@@ -820,23 +874,20 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             }
 
             using SKImage image = SKImage.FromBitmap(snapshot)
-                ?? throw new InvalidOperationException("Could not create a Skia image from the preview snapshot.");
+                                  ?? throw new InvalidOperationException("Could not create a Skia image from the preview snapshot.");
             using SKData data = image.Encode(SKEncodedImageFormat.Png, 100)
-                ?? throw new InvalidOperationException("Could not encode the preview snapshot as PNG.");
+                                ?? throw new InvalidOperationException("Could not encode the preview snapshot as PNG.");
 
-            var request = new SaveFileRequest(
-                $"thincam-{DateTimeOffset.Now:yyyyMMdd-HHmmss}.png",
-                "PNG image",
-                "png",
-                "image/png",
-                data.ToArray());
+            var request = new SaveFileRequest($"thincam-{DateTimeOffset.Now:yyyyMMdd-HHmmss}.png",
+                                              "PNG image",
+                                              "png",
+                                              "image/png",
+                                              data.ToArray());
 
-            bool saved = await SaveFileHandler(request, cancellationToken).ConfigureAwait(true);
+            var saved = await SaveFileHandler(request, cancellationToken).ConfigureAwait(true);
             StatusText = saved ? "Snapshot saved." : "Snapshot save cancelled.";
             if (saved)
-            {
                 Log($"Saved snapshot {snapshot.Width}x{snapshot.Height}.");
-            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -852,19 +903,16 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         try
         {
             if (SaveFileHandler is null)
-            {
                 return;
-            }
 
-            byte[] bytes = Encoding.UTF8.GetBytes(BuildDiagnosticReport());
-            var request = new SaveFileRequest(
-                $"thincam-diagnostics-{DateTimeOffset.Now:yyyyMMdd-HHmmss}.txt",
-                "Text report",
-                "txt",
-                "text/plain",
-                bytes);
+            var bytes = Encoding.UTF8.GetBytes(BuildDiagnosticReport());
+            var request = new SaveFileRequest($"thincam-diagnostics-{DateTimeOffset.Now:yyyyMMdd-HHmmss}.txt",
+                                              "Text report",
+                                              "txt",
+                                              "text/plain",
+                                              bytes);
 
-            bool saved = await SaveFileHandler(request, cancellationToken).ConfigureAwait(true);
+            var saved = await SaveFileHandler(request, cancellationToken).ConfigureAwait(true);
             StatusText = saved ? "Diagnostic report saved." : "Diagnostic export cancelled.";
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -879,14 +927,12 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     private void ApplyCapabilities(CameraCapabilities capabilities)
     {
         ExposureModes.Clear();
-        foreach (ExposureMode mode in capabilities.Exposure.Modes.OrderBy(static mode => mode))
-        {
+        foreach (var mode in capabilities.Exposure.Modes.OrderBy(static mode => mode))
             ExposureModes.Add(mode);
-        }
         HasExposureModes = ExposureModes.Count != 0;
         SelectedExposureMode = ExposureModes.FirstOrDefault();
 
-        NumericRange<double>? compensation = capabilities.Exposure.CompensationEv;
+        var compensation = capabilities.Exposure.CompensationEv;
         HasExposureCompensation = compensation is not null;
         if (compensation is not null)
         {
@@ -896,31 +942,25 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             ExposureCompensation = compensation.Default;
         }
 
-        NumericRange<TimeSpan>? duration = capabilities.Exposure.Duration;
+        var duration = capabilities.Exposure.Duration;
         HasManualExposure = duration is not null;
         if (duration is not null)
-        {
-            ManualExposureMilliseconds = (decimal)duration.Default.TotalMilliseconds;
-        }
+            ManualExposureMilliseconds = (decimal) duration.Default.TotalMilliseconds;
 
-        NumericRange<double>? iso = capabilities.Exposure.Iso;
+        var iso = capabilities.Exposure.Iso;
         HasIso = iso is not null;
         if (iso is not null)
-        {
-            ManualIso = (decimal)iso.Default;
-        }
+            ManualIso = (decimal) iso.Default;
 
         FocusModes.Clear();
-        foreach (FocusMode mode in capabilities.Focus.Modes.OrderBy(static mode => mode))
-        {
+        foreach (var mode in capabilities.Focus.Modes.OrderBy(static mode => mode))
             FocusModes.Add(mode);
-        }
         HasFocusModes = FocusModes.Count != 0;
         SelectedFocusMode = FocusModes.FirstOrDefault();
         HasManualFocus = capabilities.Focus.ManualPosition is not null;
         FocusPosition = capabilities.Focus.ManualPosition?.Default ?? 0.5;
 
-        NumericRange<double>? zoom = capabilities.Zoom.Factor;
+        var zoom = capabilities.Zoom.Factor;
         HasZoom = zoom is not null;
         if (zoom is not null)
         {
@@ -954,10 +994,10 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private void OnStatsTick(object? sender, EventArgs eventArgs)
     {
-        long now = Stopwatch.GetTimestamp();
-        long received = Interlocked.Read(ref _receivedCounter);
-        long rendered = Interlocked.Read(ref _renderedCounter);
-        double seconds = (now - _lastStatsTimestamp) / (double)Stopwatch.Frequency;
+        var now = Stopwatch.GetTimestamp();
+        var received = Interlocked.Read(ref _receivedCounter);
+        var rendered = Interlocked.Read(ref _renderedCounter);
+        var seconds = (now - _lastStatsTimestamp) / (double) Stopwatch.Frequency;
         if (seconds > 0)
         {
             ReceivedFramesPerSecond = (received - _previousReceivedCounter) / seconds;
@@ -971,14 +1011,14 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         RenderedFrames = rendered;
         PreviewFramesSkipped = Math.Max(0, received - rendered);
 
-        long lastFrame = Interlocked.Read(ref _lastFrameTimestamp);
+        var lastFrame = Interlocked.Read(ref _lastFrameTimestamp);
         LastFrameAge = lastFrame == 0
             ? "—"
-            : TimeSpan.FromSeconds((now - lastFrame) / (double)Stopwatch.Frequency).TotalMilliseconds.ToString("0", CultureInfo.InvariantCulture) + " ms";
+            : TimeSpan.FromSeconds((now - lastFrame) / (double) Stopwatch.Frequency).TotalMilliseconds.ToString("0", CultureInfo.InvariantCulture) + " ms";
 
-        CameraFormat? format = _camera?.ActiveFormat;
+        var format = _camera?.ActiveFormat;
         ActiveFormatText = format is null
-            ? (_camera is null ? "No active format" : "Waiting for first frame…")
+            ? _camera is null ? "No active format" : "Waiting for first frame…"
             : $"{format.Width}×{format.Height}, stride {format.Stride}, {format.PixelFormat}";
 
         SaveSnapshotCommand.RaiseCanExecuteChanged();
@@ -1012,24 +1052,22 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private static string DescribeCapabilities(CameraCapabilities capabilities)
     {
-        static string Range<T>(NumericRange<T>? range) =>
-            range is null ? "unsupported" : $"{range.Minimum} .. {range.Maximum}; default={range.Default}; step={range.Step}";
+        static string Range<T>(NumericRange<T>? range) => range is null ? "unsupported" : $"{range.Minimum} .. {range.Maximum}; default={range.Default}; step={range.Step}";
 
-        return string.Join(
-            Environment.NewLine,
-            $"Exposure modes: {Join(capabilities.Exposure.Modes)}",
-            $"Exposure compensation: {Range(capabilities.Exposure.CompensationEv)}",
-            $"Exposure duration: {Range(capabilities.Exposure.Duration)}",
-            $"ISO: {Range(capabilities.Exposure.Iso)}",
-            $"Focus modes: {Join(capabilities.Focus.Modes)}",
-            $"Focus position: {Range(capabilities.Focus.ManualPosition)}",
-            $"Zoom: {Range(capabilities.Zoom.Factor)}",
-            $"Light: available={capabilities.Light.IsAvailable}; variable={capabilities.Light.SupportsVariableLevel}; level={Range(capabilities.Light.Level)}");
+        return String.Join(Environment.NewLine,
+                           $"Exposure modes: {Join(capabilities.Exposure.Modes)}",
+                           $"Exposure compensation: {Range(capabilities.Exposure.CompensationEv)}",
+                           $"Exposure duration: {Range(capabilities.Exposure.Duration)}",
+                           $"ISO: {Range(capabilities.Exposure.Iso)}",
+                           $"Focus modes: {Join(capabilities.Focus.Modes)}",
+                           $"Focus position: {Range(capabilities.Focus.ManualPosition)}",
+                           $"Zoom: {Range(capabilities.Zoom.Factor)}",
+                           $"Light: available={capabilities.Light.IsAvailable}; variable={capabilities.Light.SupportsVariableLevel}; level={Range(capabilities.Light.Level)}");
     }
 
     private static string Join<T>(IEnumerable<T> values)
     {
-        string joined = string.Join(", ", values);
+        var joined = String.Join(", ", values);
         return joined.Length == 0 ? "unsupported" : joined;
     }
 
@@ -1046,30 +1084,27 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     {
         if (!Dispatcher.UIThread.CheckAccess())
         {
+            // DiagnosticText is UI-bound, so marshal all log mutations to the UI thread.
             Dispatcher.UIThread.Post(() => Log(message));
             return;
         }
 
         _logLines.Add($"{DateTimeOffset.Now:HH:mm:ss.fff}  {message}");
         if (_logLines.Count > 400)
-        {
             _logLines.RemoveRange(0, _logLines.Count - 400);
-        }
-        DiagnosticText = string.Join(Environment.NewLine, _logLines);
+        DiagnosticText = String.Join(Environment.NewLine, _logLines);
     }
 
     private void ClearLog()
     {
         _logLines.Clear();
-        DiagnosticText = string.Empty;
+        DiagnosticText = String.Empty;
     }
 
     private bool SetCapability(ref bool field, bool value)
     {
         if (!SetProperty(ref field, value))
-        {
             return false;
-        }
 
         NotifyCommandStates();
         return true;
@@ -1095,20 +1130,17 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private static int ToPositiveInt(decimal value, string name)
     {
-        if (value <= 0 || value > int.MaxValue)
-        {
+        if (value <= 0 || value > Int32.MaxValue)
             throw new ArgumentOutOfRangeException(name);
-        }
-        return decimal.ToInt32(decimal.Truncate(value));
+        return Decimal.ToInt32(Decimal.Truncate(value));
     }
 
-    private static double PositiveStep(double? value, double fallback) =>
-        value.HasValue && double.IsFinite(value.Value) && value.Value > 0
+    private static double PositiveStep(double? value, double fallback)
+        => value.HasValue && Double.IsFinite(value.Value) && value.Value > 0
             ? value.Value
             : fallback;
 
-    private Camera GetOpenCamera() =>
-        _camera ?? throw new InvalidOperationException("Open a camera first.");
+    private Camera GetOpenCamera() => _camera ?? throw new InvalidOperationException("Open a camera first.");
 
     private CameraPermissionStatus SafeGetPermissionStatus()
     {
@@ -1141,12 +1173,11 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
 
+    /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
-        {
             return;
-        }
 
         _statsTimer.Stop();
         await _lifecycleGate.WaitAsync().ConfigureAwait(true);

@@ -13,6 +13,7 @@
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Fonts.Inter" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" />
     <ProjectReference Include="../../Sources/ThinCam/ThinCam.csproj" />
     <ProjectReference Include="../../Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj" />
     <ProjectReference Include="../../Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj" />

@@ -8,6 +8,7 @@ using Android.OS;
 
 namespace ThinCam;
 
+/// <summary>Provides Android-specific camera permission operations.</summary>
 public static partial class CameraPermissions
 {
     private const int AndroidRequestCode = 18441;
@@ -24,9 +25,9 @@ public static partial class CameraPermissions
             : CameraPermissionStatus.Denied;
     }
 
-    public static Task<CameraPermissionStatus> RequestAsync(
-        Activity activity,
-        CancellationToken cancellationToken = default)
+    /// <summary>Requests camera permission through the specified Android activity.</summary>
+    public static Task<CameraPermissionStatus> RequestAsync(Activity activity,
+                                                            CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(activity);
 
@@ -36,17 +37,15 @@ public static partial class CameraPermissions
             return Task.FromResult(current);
         }
 
-        var completion = new TaskCompletionSource<CameraPermissionStatus>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource<CameraPermissionStatus>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         CancellationTokenRegistration registration =
             cancellationToken.Register(() => completion.TrySetCanceled(cancellationToken));
-        _ = completion.Task.ContinueWith(
-            static (_, state) => ((CancellationTokenRegistration)state!).Dispose(),
-            registration,
-            CancellationToken.None,
-            TaskContinuationOptions.ExecuteSynchronously,
-            TaskScheduler.Default);
+        _ = completion.Task.ContinueWith(static (_, state) => ((CancellationTokenRegistration) state!).Dispose(),
+                                         registration,
+                                         CancellationToken.None,
+                                         TaskContinuationOptions.ExecuteSynchronously,
+                                         TaskScheduler.Default);
 
         activity.RunOnUiThread(() =>
         {
@@ -54,9 +53,9 @@ public static partial class CameraPermissions
             {
                 var fragment = new CameraPermissionFragment(completion);
                 FragmentManager manager = activity.FragmentManager
-                    ?? throw new InvalidOperationException("The activity does not have a FragmentManager.");
+                                          ?? throw new InvalidOperationException("The activity does not have a FragmentManager.");
                 FragmentTransaction transaction = manager.BeginTransaction()
-                    ?? throw new InvalidOperationException("The FragmentManager did not start a transaction.");
+                                                  ?? throw new InvalidOperationException("The FragmentManager did not start a transaction.");
                 _ = transaction.Add(fragment, CameraPermissionFragment.TagName);
                 transaction.CommitAllowingStateLoss();
             }
@@ -89,13 +88,13 @@ public static partial class CameraPermissions
             RequestPermissions([Manifest.Permission.Camera], AndroidRequestCode);
         }
 
-        public override void OnRequestPermissionsResult(
-            int requestCode,
-            string[] permissions,
-            Permission[] grantResults)
+        public override void OnRequestPermissionsResult(int requestCode,
+                                                        string[] permissions,
+                                                        Permission[] grantResults)
         {
             base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-            if (requestCode != AndroidRequestCode) return;
+            if (requestCode != AndroidRequestCode)
+                return;
 
             CameraPermissionStatus status = grantResults.Length > 0 && grantResults[0] == Permission.Granted
                 ? CameraPermissionStatus.Granted

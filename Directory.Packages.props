@@ -13,6 +13,7 @@
     <PackageVersion Include="Avalonia.iOS" Version="12.1.0" />
     <PackageVersion Include="Avalonia.Skia" Version="12.1.0" />
     <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.0" />
+    <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
   </ItemGroup>
   <ItemGroup Label="SkiaSharp">
     <PackageVersion Include="SkiaSharp" Version="4.150.1" />

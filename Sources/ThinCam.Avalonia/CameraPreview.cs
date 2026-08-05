@@ -4,56 +4,49 @@ using Avalonia.Media;
 using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
 using SkiaSharp;
 
 namespace ThinCam.Avalonia;
 
 /// <summary>
-/// Renders the latest frame from a <see cref="CameraPreviewSource"/> directly to
+/// Renders the latest frame from a <see cref="CameraPreviewSource" /> directly to
 /// Avalonia's Skia canvas. The control does not open or own a camera.
 /// </summary>
 public sealed class CameraPreview : Control
 {
-    /// <summary>Defines the <see cref="Source"/> property.</summary>
+    /// <summary>Defines the <see cref="Source" /> property.</summary>
     public static readonly StyledProperty<CameraPreviewSource?> SourceProperty =
         AvaloniaProperty.Register<CameraPreview, CameraPreviewSource?>(nameof(Source));
 
-    /// <summary>Defines the <see cref="Stretch"/> property.</summary>
+    /// <summary>Defines the <see cref="Stretch" /> property.</summary>
     public static readonly StyledProperty<Stretch> StretchProperty =
-        AvaloniaProperty.Register<CameraPreview, Stretch>(
-            nameof(Stretch),
-            defaultValue: Stretch.Uniform);
+        AvaloniaProperty.Register<CameraPreview, Stretch>(nameof(Stretch),
+                                                          Stretch.Uniform);
 
-    /// <summary>Defines the <see cref="StretchDirection"/> property.</summary>
+    /// <summary>Defines the <see cref="StretchDirection" /> property.</summary>
     public static readonly StyledProperty<StretchDirection> StretchDirectionProperty =
-        AvaloniaProperty.Register<CameraPreview, StretchDirection>(
-            nameof(StretchDirection),
-            defaultValue: StretchDirection.Both);
+        AvaloniaProperty.Register<CameraPreview, StretchDirection>(nameof(StretchDirection),
+                                                                   StretchDirection.Both);
 
-    /// <summary>Defines the <see cref="PreviewBackground"/> property.</summary>
+    /// <summary>Defines the <see cref="PreviewBackground" /> property.</summary>
     public static readonly StyledProperty<Color> PreviewBackgroundProperty =
-        AvaloniaProperty.Register<CameraPreview, Color>(
-            nameof(PreviewBackground),
-            defaultValue: Color.FromRgb(16, 18, 22));
+        AvaloniaProperty.Register<CameraPreview, Color>(nameof(PreviewBackground),
+                                                        Color.FromRgb(16, 18, 22));
 
-    /// <summary>Defines the <see cref="PlaceholderForeground"/> property.</summary>
+    /// <summary>Defines the <see cref="PlaceholderForeground" /> property.</summary>
     public static readonly StyledProperty<Color> PlaceholderForegroundProperty =
-        AvaloniaProperty.Register<CameraPreview, Color>(
-            nameof(PlaceholderForeground),
-            defaultValue: Color.FromRgb(180, 184, 192));
+        AvaloniaProperty.Register<CameraPreview, Color>(nameof(PlaceholderForeground),
+                                                        Color.FromRgb(180, 184, 192));
 
-    /// <summary>Defines the <see cref="PlaceholderText"/> property.</summary>
+    /// <summary>Defines the <see cref="PlaceholderText" /> property.</summary>
     public static readonly StyledProperty<string> PlaceholderTextProperty =
-        AvaloniaProperty.Register<CameraPreview, string>(
-            nameof(PlaceholderText),
-            defaultValue: "No camera frame");
+        AvaloniaProperty.Register<CameraPreview, string>(nameof(PlaceholderText),
+                                                         "No camera frame");
 
-    /// <summary>Defines the <see cref="ShowPlaceholder"/> property.</summary>
+    /// <summary>Defines the <see cref="ShowPlaceholder" /> property.</summary>
     public static readonly StyledProperty<bool> ShowPlaceholderProperty =
-        AvaloniaProperty.Register<CameraPreview, bool>(
-            nameof(ShowPlaceholder),
-            defaultValue: true);
+        AvaloniaProperty.Register<CameraPreview, bool>(nameof(ShowPlaceholder),
+                                                       true);
 
     private CameraPreviewSource? _subscribedSource;
     private int _invalidatePending;
@@ -122,20 +115,17 @@ public sealed class CameraPreview : Control
 
         Rect bounds = new(Bounds.Size);
         if (bounds.Width <= 0 || bounds.Height <= 0)
-        {
             return;
-        }
 
-        context.Custom(new PreviewDrawOperation(
-            bounds,
-            Source,
-            Stretch,
-            StretchDirection,
-            PreviewBackground,
-            PlaceholderForeground,
-            PlaceholderText,
-            ShowPlaceholder,
-            OnFrameRendered));
+        context.Custom(new PreviewDrawOperation(bounds,
+                                                Source,
+                                                Stretch,
+                                                StretchDirection,
+                                                PreviewBackground,
+                                                PlaceholderForeground,
+                                                PlaceholderText,
+                                                ShowPlaceholder,
+                                                OnFrameRendered));
     }
 
     /// <inheritdoc />
@@ -156,9 +146,7 @@ public sealed class CameraPreview : Control
             change.Property == PlaceholderForegroundProperty ||
             change.Property == PlaceholderTextProperty ||
             change.Property == ShowPlaceholderProperty)
-        {
             InvalidateVisual();
-        }
     }
 
     /// <inheritdoc />
@@ -180,75 +168,56 @@ public sealed class CameraPreview : Control
     private void AttachSource(CameraPreviewSource? source)
     {
         if (ReferenceEquals(_subscribedSource, source))
-        {
             return;
-        }
 
         if (_subscribedSource is not null)
-        {
             _subscribedSource.FrameChanged -= OnSourceFrameChanged;
-        }
 
         _subscribedSource = source;
 
         if (_subscribedSource is not null)
-        {
             _subscribedSource.FrameChanged += OnSourceFrameChanged;
-        }
     }
 
-    private void OnSourceFrameChanged(object? sender, CameraPreviewFrameEventArgs eventArgs) =>
-        RequestRender();
+    private void OnSourceFrameChanged(object? sender, CameraPreviewFrameEventArgs eventArgs) => RequestRender();
 
     private void RequestRender()
     {
         if (Interlocked.Exchange(ref _invalidatePending, 1) != 0)
-        {
             return;
-        }
 
-        Dispatcher.UIThread.Post(
-            () =>
-            {
-                Interlocked.Exchange(ref _invalidatePending, 0);
-                if (_isAttached)
-                {
-                    InvalidateVisual();
-                }
-            },
-            DispatcherPriority.Render);
+        Dispatcher.UIThread.Post(() =>
+                                 {
+                                     Interlocked.Exchange(ref _invalidatePending, 0);
+                                     if (_isAttached)
+                                         InvalidateVisual();
+                                 },
+                                 DispatcherPriority.Render);
     }
 
     private void OnFrameRendered(CameraPreviewFrameEventArgs eventArgs)
     {
         if (!eventArgs.HasFrame)
-        {
             return;
-        }
 
-        long previous = Interlocked.Exchange(
-            ref _lastRenderedVersion,
-            eventArgs.Version);
+        var previous = Interlocked.Exchange(ref _lastRenderedVersion,
+                                            eventArgs.Version);
         if (previous == eventArgs.Version)
-        {
             return;
-        }
 
-        Dispatcher.UIThread.Post(
-            () => FrameRendered?.Invoke(this, eventArgs),
-            DispatcherPriority.Background);
+        Dispatcher.UIThread.Post(() => FrameRendered?.Invoke(this, eventArgs),
+                                 DispatcherPriority.Background);
     }
 
-    private sealed class PreviewDrawOperation(
-        Rect bounds,
-        CameraPreviewSource? source,
-        Stretch stretch,
-        StretchDirection stretchDirection,
-        Color background,
-        Color placeholderForeground,
-        string placeholderText,
-        bool showPlaceholder,
-        Action<CameraPreviewFrameEventArgs> rendered) : ICustomDrawOperation
+    private sealed class PreviewDrawOperation(Rect bounds,
+                                              CameraPreviewSource? source,
+                                              Stretch stretch,
+                                              StretchDirection stretchDirection,
+                                              Color background,
+                                              Color placeholderForeground,
+                                              string placeholderText,
+                                              bool showPlaceholder,
+                                              Action<CameraPreviewFrameEventArgs> rendered) : ICustomDrawOperation
     {
         public Rect Bounds { get; } = bounds;
 
@@ -262,27 +231,25 @@ public sealed class CameraPreview : Control
 
         public void Render(ImmediateDrawingContext context)
         {
-            ISkiaSharpApiLeaseFeature? feature =
+            var feature =
                 context.TryGetFeature<ISkiaSharpApiLeaseFeature>();
             if (feature is null)
-            {
                 return;
-            }
 
-            using ISkiaSharpApiLease lease = feature.Lease();
-            SKCanvas canvas = lease.SkCanvas;
-            int saveCount = canvas.Save();
+            using var lease = feature.Lease();
+            var canvas = lease.SkCanvas;
+            var saveCount = canvas.Save();
 
             try
             {
-                SKRect clip = ToSkRect(Bounds);
+                var clip = ToSkRect(Bounds);
                 canvas.ClipRect(clip);
                 canvas.DrawColor(ToSkColor(background));
 
                 long version = 0;
-                int width = 0;
-                int height = 0;
-                bool drewFrame = false;
+                var width = 0;
+                var height = 0;
+                var drewFrame = false;
 
                 if (source is not null)
                 {
@@ -293,17 +260,14 @@ public sealed class CameraPreview : Control
                             version = publishedVersion;
                             width = bitmap.Width;
                             height = bitmap.Height;
-                            SKRect destination = CalculateDestination(
-                                Bounds,
-                                bitmap.Width,
-                                bitmap.Height,
-                                stretch,
-                                stretchDirection);
-                            canvas.DrawBitmap(
-                                bitmap,
-                                destination,
-                                SKSamplingOptions.Default,
-                                null);
+                            var destination = CalculateDestination(Bounds,
+                                                                   bitmap.Width,
+                                                                   bitmap.Height,
+                                                                   stretch,
+                                                                   stretchDirection);
+                            canvas.DrawBitmap(bitmap,
+                                              destination,
+                                              SKSamplingOptions.Default);
                         });
                     }
                     catch (ObjectDisposedException)
@@ -314,16 +278,13 @@ public sealed class CameraPreview : Control
 
                 if (drewFrame)
                 {
-                    rendered(new CameraPreviewFrameEventArgs(
-                        version,
-                        width,
-                        height,
-                        hasFrame: true));
+                    rendered(new CameraPreviewFrameEventArgs(version,
+                                                             width,
+                                                             height,
+                                                             true));
                 }
-                else if (showPlaceholder && !string.IsNullOrWhiteSpace(placeholderText))
-                {
+                else if (showPlaceholder && !String.IsNullOrWhiteSpace(placeholderText))
                     DrawPlaceholder(canvas, Bounds, placeholderText, placeholderForeground);
-                }
             }
             finally
             {
@@ -331,35 +292,30 @@ public sealed class CameraPreview : Control
             }
         }
 
-        private static void DrawPlaceholder(
-            SKCanvas canvas,
-            Rect bounds,
-            string text,
-            Color color)
+        private static void DrawPlaceholder(SKCanvas canvas,
+                                            Rect bounds,
+                                            string text,
+                                            Color color)
         {
-            using var paint = new SKPaint
-            {
-                IsAntialias = true,
-                Color = ToSkColor(color)
-            };
+            using var paint = new SKPaint { IsAntialias = true, Color = ToSkColor(color) };
             using var font = new SKFont(SKTypeface.Default, 18);
 
-            float textWidth = font.MeasureText(text, paint);
-            SKFontMetrics metrics = font.Metrics;
-            float x = (float)(bounds.X + Math.Max(12, (bounds.Width - textWidth) / 2));
-            float y = (float)(bounds.Y + (bounds.Height - metrics.Ascent - metrics.Descent) / 2);
+            var textWidth = font.MeasureText(text, paint);
+            var metrics = font.Metrics;
+            var x = (float) (bounds.X + Math.Max(12, (bounds.Width - textWidth) / 2));
+            var y = (float) (bounds.Y + ((bounds.Height - metrics.Ascent - metrics.Descent) / 2));
             canvas.DrawText(text, x, y, SKTextAlign.Left, font, paint);
         }
 
-        private static SKRect CalculateDestination(
-            Rect bounds,
-            int sourceWidth,
-            int sourceHeight,
-            Stretch stretch,
-            StretchDirection direction)
+        private static SKRect CalculateDestination(Rect bounds,
+                                                   int sourceWidth,
+                                                   int sourceHeight,
+                                                   Stretch stretch,
+                                                   StretchDirection direction)
         {
-            double scaleX = bounds.Width / sourceWidth;
-            double scaleY = bounds.Height / sourceHeight;
+            // Derive axis scales before applying stretch and direction constraints.
+            var scaleX = bounds.Width / sourceWidth;
+            var scaleY = bounds.Height / sourceHeight;
 
             switch (stretch)
             {
@@ -395,17 +351,15 @@ public sealed class CameraPreview : Control
                     throw new ArgumentOutOfRangeException(nameof(direction));
             }
 
-            float width = (float)(sourceWidth * scaleX);
-            float height = (float)(sourceHeight * scaleY);
-            float left = (float)(bounds.X + (bounds.Width - width) / 2);
-            float top = (float)(bounds.Y + (bounds.Height - height) / 2);
+            var width = (float) (sourceWidth * scaleX);
+            var height = (float) (sourceHeight * scaleY);
+            var left = (float) (bounds.X + ((bounds.Width - width) / 2));
+            var top = (float) (bounds.Y + ((bounds.Height - height) / 2));
             return new SKRect(left, top, left + width, top + height);
         }
 
-        private static SKColor ToSkColor(Color color) =>
-            new(color.R, color.G, color.B, color.A);
+        private static SKColor ToSkColor(Color color) => new(color.R, color.G, color.B, color.A);
 
-        private static SKRect ToSkRect(Rect rect) =>
-            new((float)rect.X, (float)rect.Y, (float)rect.Right, (float)rect.Bottom);
+        private static SKRect ToSkRect(Rect rect) => new((float) rect.X, (float) rect.Y, (float) rect.Right, (float) rect.Bottom);
     }
 }

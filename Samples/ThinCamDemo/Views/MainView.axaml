@@ -1,242 +1,267 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:tc="using:ThinCam.Avalonia"
-             x:Class="ThinCam.Demo.Views.MainView">
-  <Grid RowDefinitions="Auto,*" Margin="12">
-    <Border Classes="card" Margin="0,0,0,10">
-      <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-        <StackPanel>
-          <TextBlock FontSize="22" FontWeight="SemiBold" Text="ThinCam cross-platform test app" />
-          <TextBlock Opacity="0.7" Text="{Binding PlatformDescription}" TextWrapping="Wrap" />
-        </StackPanel>
-        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-          <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding StatusText}" />
-          <TextBlock HorizontalAlignment="Right" Opacity="0.7" Text="{Binding ActiveFormatText}" />
-        </StackPanel>
-        <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0"
-                   Foreground="#D95C5C" Text="{Binding LastError}" TextWrapping="Wrap" />
-      </Grid>
-    </Border>
+             x:Class="ThinCamDemo.Views.MainView">
+    <Grid RowDefinitions="Auto,*" Margin="12">
+        <Border Classes="card" Margin="0,0,0,10">
+            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                <StackPanel>
+                    <TextBlock FontSize="22" FontWeight="SemiBold" Text="ThinCam cross-platform test app" />
+                    <TextBlock Opacity="0.7" Text="{Binding PlatformDescription}" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                    <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{Binding StatusText}" />
+                    <TextBlock HorizontalAlignment="Right" Opacity="0.7" Text="{Binding ActiveFormatText}" />
+                </StackPanel>
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0"
+                           Foreground="#D95C5C" Text="{Binding LastError}" TextWrapping="Wrap" />
+            </Grid>
+        </Border>
 
-    <TabControl Grid.Row="1">
-      <TabItem Header="Capture">
-        <ScrollViewer HorizontalScrollBarVisibility="Auto">
-          <StackPanel Spacing="10" Margin="4">
-            <Border Classes="card" Padding="0">
-              <Grid RowDefinitions="*,Auto" MinHeight="320">
-                <tc:CameraPreview x:Name="Preview"
-                                  Source="{Binding PreviewSource}"
-                                  Stretch="Uniform"
-                                  PlaceholderText="Open a camera to start preview"
-                                  FrameRendered="OnPreviewFrameRendered" />
-                <Border Grid.Row="1" Background="#B0101216" Padding="8">
-                  <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*" ColumnSpacing="16">
-                    <StackPanel>
-                      <TextBlock Classes="label" Text="Received FPS" />
-                      <TextBlock FontWeight="SemiBold" Text="{Binding ReceivedFramesPerSecond, StringFormat={}{0:0.0}}" />
+        <TabControl Grid.Row="1">
+            <TabItem Header="Capture">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="10" Margin="4">
+                        <Border Classes="card" Padding="0">
+                            <Grid RowDefinitions="*,Auto" MinHeight="320">
+                                <tc:CameraPreview x:Name="Preview"
+                                                  Source="{Binding PreviewSource}"
+                                                  Stretch="Uniform"
+                                                  PlaceholderText="Open a camera to start preview"
+                                                  FrameRendered="OnPreviewFrameRendered" />
+                                <Border Grid.Row="1" Background="#B0101216" Padding="8">
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*" ColumnSpacing="16">
+                                        <StackPanel>
+                                            <TextBlock Classes="label" Text="Received FPS" />
+                                            <TextBlock FontWeight="SemiBold"
+                                                       Text="{Binding ReceivedFramesPerSecond, StringFormat={}{0:0.0}}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Classes="label" Text="Rendered FPS" />
+                                            <TextBlock FontWeight="SemiBold"
+                                                       Text="{Binding RenderedFramesPerSecond, StringFormat={}{0:0.0}}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Classes="label" Text="Frames" />
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding TotalFrames}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="3">
+                                            <TextBlock Classes="label" Text="Last frame" />
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding LastFrameAge}" />
+                                        </StackPanel>
+                                        <Button Grid.Column="4" HorizontalAlignment="Right"
+                                                Command="{Binding SaveSnapshotCommand}" Content="Save snapshot" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border Classes="card">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="section-title" Text="Permission and device" />
+                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="10"
+                                      RowSpacing="8">
+                                    <TextBlock Classes="label" Text="Permission" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <TextBlock VerticalAlignment="Center" FontWeight="SemiBold"
+                                                   Text="{Binding PermissionStatusText}" />
+                                        <Button Command="{Binding RequestPermissionCommand}"
+                                                Content="Request permission" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="1" Classes="label" Text="Camera" />
+                                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <ComboBox ItemsSource="{Binding Devices}"
+                                                  SelectedItem="{Binding SelectedDevice}"
+                                                  HorizontalAlignment="Stretch" />
+                                        <Button Grid.Column="1" Command="{Binding RefreshDevicesCommand}"
+                                                Content="Refresh" />
+                                    </Grid>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="card">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="section-title" Text="Capture request" />
+                                <Grid ColumnDefinitions="Auto,110,Auto,110" RowDefinitions="Auto,Auto"
+                                      ColumnSpacing="8" RowSpacing="8">
+                                    <TextBlock Classes="label" Text="Width" />
+                                    <NumericUpDown Grid.Column="1" Value="{Binding RequestedWidth}" Minimum="1"
+                                                   Maximum="7680" Increment="1" FormatString="0" />
+                                    <TextBlock Grid.Column="2" Classes="label" Text="Height" />
+                                    <NumericUpDown Grid.Column="3" Value="{Binding RequestedHeight}" Minimum="1"
+                                                   Maximum="4320" Increment="1" FormatString="0" />
+                                    <TextBlock Grid.Row="1" Classes="label" Text="FPS" />
+                                    <NumericUpDown Grid.Row="1" Grid.Column="1"
+                                                   Value="{Binding RequestedFramesPerSecond}" Minimum="1" Maximum="240"
+                                                   Increment="1" FormatString="0" />
+                                    <TextBlock Grid.Row="1" Grid.Column="2" Classes="label" Text="Queue" />
+                                    <NumericUpDown Grid.Row="1" Grid.Column="3" Value="{Binding QueueCapacity}"
+                                                   Minimum="1" Maximum="32" Increment="1" FormatString="0" />
+                                </Grid>
+                                <WrapPanel ItemSpacing="8" LineSpacing="8" Margin="0,4,0,0">
+                                    <Button Command="{Binding OpenCameraCommand}" Content="Open" />
+                                    <Button Command="{Binding CloseCameraCommand}" Content="Close" />
+                                    <Button Command="{Binding RestartCameraCommand}" Content="Restart" />
+                                    <Button Command="{Binding RefreshCapabilitiesCommand}"
+                                            Content="Refresh capabilities" />
+                                    <Button Command="{Binding RefreshControlStateCommand}"
+                                            Content="Refresh control state" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="card">
+                            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="12"
+                                  RowSpacing="4">
+                                <TextBlock Classes="label" Text="Rendered frames" />
+                                <TextBlock Grid.Column="1" Text="{Binding RenderedFrames}" />
+                                <TextBlock Grid.Row="1" Classes="label" Text="Preview frames skipped" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PreviewFramesSkipped}" />
+                                <TextBlock Grid.Row="2" Classes="label" Text="Active format" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ActiveFormatText}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Grid.Row="3" Classes="label" Text="Selected device ID" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedDevice.Device.Id}"
+                                           TextWrapping="Wrap" />
+                            </Grid>
+                        </Border>
                     </StackPanel>
-                    <StackPanel Grid.Column="1">
-                      <TextBlock Classes="label" Text="Rendered FPS" />
-                      <TextBlock FontWeight="SemiBold" Text="{Binding RenderedFramesPerSecond, StringFormat={}{0:0.0}}" />
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Controls">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="10" Margin="4">
+                        <Border Classes="card">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="section-title" Text="Exposure" />
+                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10"
+                                      RowSpacing="8">
+                                    <TextBlock Classes="label" Text="Mode" />
+                                    <Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <ComboBox IsEnabled="{Binding HasExposureModes}"
+                                                  ItemsSource="{Binding ExposureModes}"
+                                                  SelectedItem="{Binding SelectedExposureMode}" />
+                                        <Button Grid.Column="1" IsEnabled="{Binding HasExposureModes}"
+                                                Command="{Binding ApplyExposureModeCommand}" Content="Apply" />
+                                    </Grid>
+
+                                    <TextBlock Grid.Row="1" Classes="label" Text="Compensation (EV)" />
+                                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,70,Auto" ColumnSpacing="8">
+                                        <Slider Minimum="{Binding ExposureCompensationMinimum}"
+                                                Maximum="{Binding ExposureCompensationMaximum}"
+                                                TickFrequency="{Binding ExposureCompensationStep}"
+                                                IsSnapToTickEnabled="False"
+                                                IsEnabled="{Binding HasExposureCompensation}"
+                                                Value="{Binding ExposureCompensation}" />
+                                        <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                                   Text="{Binding ExposureCompensation, StringFormat={}{0:0.###}}" />
+                                        <Button Grid.Column="2" IsEnabled="{Binding HasExposureCompensation}"
+                                                Command="{Binding ApplyExposureCompensationCommand}" Content="Apply" />
+                                    </Grid>
+
+                                    <TextBlock Grid.Row="2" Classes="label" Text="Manual" />
+                                    <WrapPanel Grid.Row="2" Grid.Column="1" ItemSpacing="8" LineSpacing="8">
+                                        <TextBlock VerticalAlignment="Center" Text="Duration ms" />
+                                        <NumericUpDown Width="120" Minimum="0.001" Maximum="60000" Increment="0.1"
+                                                       IsEnabled="{Binding HasManualExposure}"
+                                                       Value="{Binding ManualExposureMilliseconds}" />
+                                        <TextBlock VerticalAlignment="Center" Text="ISO" />
+                                        <NumericUpDown Width="100" Minimum="1" Maximum="100000" Increment="1"
+                                                       IsEnabled="{Binding HasIso}" Value="{Binding ManualIso}" />
+                                        <Button IsEnabled="{Binding HasManualExposure}"
+                                                Command="{Binding ApplyManualExposureCommand}" Content="Apply manual" />
+                                    </WrapPanel>
+                                </Grid>
+                                <TextBlock Opacity="0.65"
+                                           Text="Unsupported exposure features remain disabled because capabilities are device and driver specific."
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="card">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="section-title" Text="Focus" />
+                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="10"
+                                      RowSpacing="8">
+                                    <TextBlock Classes="label" Text="Mode" />
+                                    <Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <ComboBox IsEnabled="{Binding HasFocusModes}"
+                                                  ItemsSource="{Binding FocusModes}"
+                                                  SelectedItem="{Binding SelectedFocusMode}" />
+                                        <Button Grid.Column="1" IsEnabled="{Binding HasFocusModes}"
+                                                Command="{Binding ApplyFocusModeCommand}" Content="Apply" />
+                                    </Grid>
+                                    <TextBlock Grid.Row="1" Classes="label" Text="Manual position" />
+                                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,70,Auto" ColumnSpacing="8">
+                                        <Slider Minimum="0" Maximum="1" TickFrequency="0.01"
+                                                IsEnabled="{Binding HasManualFocus}" Value="{Binding FocusPosition}" />
+                                        <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                                   Text="{Binding FocusPosition, StringFormat={}{0:0.###}}" />
+                                        <Button Grid.Column="2" IsEnabled="{Binding HasManualFocus}"
+                                                Command="{Binding ApplyFocusPositionCommand}" Content="Apply" />
+                                    </Grid>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="card">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="section-title" Text="Zoom" />
+                                <Grid ColumnDefinitions="*,70,Auto" ColumnSpacing="8">
+                                    <Slider Minimum="{Binding ZoomMinimum}" Maximum="{Binding ZoomMaximum}"
+                                            TickFrequency="{Binding ZoomStep}" IsEnabled="{Binding HasZoom}"
+                                            Value="{Binding ZoomFactor}" />
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                               Text="{Binding ZoomFactor, StringFormat={}{0:0.###}×}" />
+                                    <Button Grid.Column="2" IsEnabled="{Binding HasZoom}"
+                                            Command="{Binding ApplyZoomCommand}" Content="Apply" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="card">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="section-title" Text="Light" />
+                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="10"
+                                      RowSpacing="8">
+                                    <CheckBox Content="Enabled" IsEnabled="{Binding HasLight}"
+                                              IsChecked="{Binding LightEnabled}" />
+                                    <Button Grid.Column="1" HorizontalAlignment="Right" IsEnabled="{Binding HasLight}"
+                                            Command="{Binding ApplyLightCommand}" Content="Apply" />
+                                    <TextBlock Grid.Row="1" Classes="label" Text="Level" />
+                                    <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,70" ColumnSpacing="8">
+                                        <Slider Minimum="0" Maximum="1" TickFrequency="0.01"
+                                                IsEnabled="{Binding HasVariableLight}" Value="{Binding LightLevel}" />
+                                        <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                                   Text="{Binding LightLevel, StringFormat={}{0:0.###}}" />
+                                    </Grid>
+                                </Grid>
+                                <TextBlock Opacity="0.65"
+                                           Text="Light means continuous camera illumination. Privacy indicators and still-image flash timing are not controlled."
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                    <StackPanel Grid.Column="2">
-                      <TextBlock Classes="label" Text="Frames" />
-                      <TextBlock FontWeight="SemiBold" Text="{Binding TotalFrames}" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="3">
-                      <TextBlock Classes="label" Text="Last frame" />
-                      <TextBlock FontWeight="SemiBold" Text="{Binding LastFrameAge}" />
-                    </StackPanel>
-                    <Button Grid.Column="4" HorizontalAlignment="Right"
-                            Command="{Binding SaveSnapshotCommand}" Content="Save snapshot" />
-                  </Grid>
-                </Border>
-              </Grid>
-            </Border>
+                </ScrollViewer>
+            </TabItem>
 
-            <Border Classes="card">
-              <StackPanel Spacing="8">
-                <TextBlock Classes="section-title" Text="Permission and device" />
-                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="8">
-                  <TextBlock Classes="label" Text="Permission" />
-                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                    <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="{Binding PermissionStatusText}" />
-                    <Button Command="{Binding RequestPermissionCommand}" Content="Request permission" />
-                  </StackPanel>
-                  <TextBlock Grid.Row="1" Classes="label" Text="Camera" />
-                  <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <ComboBox ItemsSource="{Binding Devices}"
-                              SelectedItem="{Binding SelectedDevice}"
-                              HorizontalAlignment="Stretch" />
-                    <Button Grid.Column="1" Command="{Binding RefreshDevicesCommand}" Content="Refresh" />
-                  </Grid>
+            <TabItem Header="Diagnostics">
+                <Grid RowDefinitions="Auto,*" Margin="4">
+                    <WrapPanel ItemSpacing="8" LineSpacing="8" Margin="0,0,0,8">
+                        <Button Command="{Binding ExportDiagnosticsCommand}" Content="Export report" />
+                        <Button Command="{Binding ClearLogCommand}" Content="Clear log" />
+                        <Button Command="{Binding RefreshDevicesCommand}" Content="Re-enumerate" />
+                        <Button Command="{Binding RefreshCapabilitiesCommand}" Content="Read capabilities" />
+                    </WrapPanel>
+                    <TextBox Grid.Row="1" Text="{Binding DiagnosticText}"
+                             IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
+                             FontFamily="monospace"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto" />
                 </Grid>
-              </StackPanel>
-            </Border>
-
-            <Border Classes="card">
-              <StackPanel Spacing="8">
-                <TextBlock Classes="section-title" Text="Capture request" />
-                <Grid ColumnDefinitions="Auto,110,Auto,110" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
-                  <TextBlock Classes="label" Text="Width" />
-                  <NumericUpDown Grid.Column="1" Value="{Binding RequestedWidth}" Minimum="1" Maximum="7680" Increment="1" FormatString="0" />
-                  <TextBlock Grid.Column="2" Classes="label" Text="Height" />
-                  <NumericUpDown Grid.Column="3" Value="{Binding RequestedHeight}" Minimum="1" Maximum="4320" Increment="1" FormatString="0" />
-                  <TextBlock Grid.Row="1" Classes="label" Text="FPS" />
-                  <NumericUpDown Grid.Row="1" Grid.Column="1" Value="{Binding RequestedFramesPerSecond}" Minimum="1" Maximum="240" Increment="1" FormatString="0" />
-                  <TextBlock Grid.Row="1" Grid.Column="2" Classes="label" Text="Queue" />
-                  <NumericUpDown Grid.Row="1" Grid.Column="3" Value="{Binding QueueCapacity}" Minimum="1" Maximum="32" Increment="1" FormatString="0" />
-                </Grid>
-                <WrapPanel ItemSpacing="8" LineSpacing="8" Margin="0,4,0,0">
-                  <Button Command="{Binding OpenCameraCommand}" Content="Open" />
-                  <Button Command="{Binding CloseCameraCommand}" Content="Close" />
-                  <Button Command="{Binding RestartCameraCommand}" Content="Restart" />
-                  <Button Command="{Binding RefreshCapabilitiesCommand}" Content="Refresh capabilities" />
-                  <Button Command="{Binding RefreshControlStateCommand}" Content="Refresh control state" />
-                </WrapPanel>
-              </StackPanel>
-            </Border>
-
-            <Border Classes="card">
-              <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="4">
-                <TextBlock Classes="label" Text="Rendered frames" />
-                <TextBlock Grid.Column="1" Text="{Binding RenderedFrames}" />
-                <TextBlock Grid.Row="1" Classes="label" Text="Preview frames skipped" />
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PreviewFramesSkipped}" />
-                <TextBlock Grid.Row="2" Classes="label" Text="Active format" />
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ActiveFormatText}" TextWrapping="Wrap" />
-                <TextBlock Grid.Row="3" Classes="label" Text="Selected device ID" />
-                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedDevice.Device.Id}" TextWrapping="Wrap" />
-              </Grid>
-            </Border>
-          </StackPanel>
-        </ScrollViewer>
-      </TabItem>
-
-      <TabItem Header="Controls">
-        <ScrollViewer HorizontalScrollBarVisibility="Auto">
-          <StackPanel Spacing="10" Margin="4">
-            <Border Classes="card">
-              <StackPanel Spacing="8">
-                <TextBlock Classes="section-title" Text="Exposure" />
-                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
-                  <TextBlock Classes="label" Text="Mode" />
-                  <Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <ComboBox IsEnabled="{Binding HasExposureModes}"
-                              ItemsSource="{Binding ExposureModes}"
-                              SelectedItem="{Binding SelectedExposureMode}" />
-                    <Button Grid.Column="1" IsEnabled="{Binding HasExposureModes}"
-                            Command="{Binding ApplyExposureModeCommand}" Content="Apply" />
-                  </Grid>
-
-                  <TextBlock Grid.Row="1" Classes="label" Text="Compensation (EV)" />
-                  <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,70,Auto" ColumnSpacing="8">
-                    <Slider Minimum="{Binding ExposureCompensationMinimum}"
-                            Maximum="{Binding ExposureCompensationMaximum}"
-                            TickFrequency="{Binding ExposureCompensationStep}"
-                            IsSnapToTickEnabled="False"
-                            IsEnabled="{Binding HasExposureCompensation}"
-                            Value="{Binding ExposureCompensation}" />
-                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
-                               Text="{Binding ExposureCompensation, StringFormat={}{0:0.###}}" />
-                    <Button Grid.Column="2" IsEnabled="{Binding HasExposureCompensation}"
-                            Command="{Binding ApplyExposureCompensationCommand}" Content="Apply" />
-                  </Grid>
-
-                  <TextBlock Grid.Row="2" Classes="label" Text="Manual" />
-                  <WrapPanel Grid.Row="2" Grid.Column="1" ItemSpacing="8" LineSpacing="8">
-                    <TextBlock VerticalAlignment="Center" Text="Duration ms" />
-                    <NumericUpDown Width="120" Minimum="0.001" Maximum="60000" Increment="0.1"
-                                   IsEnabled="{Binding HasManualExposure}"
-                                   Value="{Binding ManualExposureMilliseconds}" />
-                    <TextBlock VerticalAlignment="Center" Text="ISO" />
-                    <NumericUpDown Width="100" Minimum="1" Maximum="100000" Increment="1"
-                                   IsEnabled="{Binding HasIso}" Value="{Binding ManualIso}" />
-                    <Button IsEnabled="{Binding HasManualExposure}"
-                            Command="{Binding ApplyManualExposureCommand}" Content="Apply manual" />
-                  </WrapPanel>
-                </Grid>
-                <TextBlock Opacity="0.65" Text="Unsupported exposure features remain disabled because capabilities are device and driver specific." TextWrapping="Wrap" />
-              </StackPanel>
-            </Border>
-
-            <Border Classes="card">
-              <StackPanel Spacing="8">
-                <TextBlock Classes="section-title" Text="Focus" />
-                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="8">
-                  <TextBlock Classes="label" Text="Mode" />
-                  <Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <ComboBox IsEnabled="{Binding HasFocusModes}"
-                              ItemsSource="{Binding FocusModes}"
-                              SelectedItem="{Binding SelectedFocusMode}" />
-                    <Button Grid.Column="1" IsEnabled="{Binding HasFocusModes}"
-                            Command="{Binding ApplyFocusModeCommand}" Content="Apply" />
-                  </Grid>
-                  <TextBlock Grid.Row="1" Classes="label" Text="Manual position" />
-                  <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,70,Auto" ColumnSpacing="8">
-                    <Slider Minimum="0" Maximum="1" TickFrequency="0.01"
-                            IsEnabled="{Binding HasManualFocus}" Value="{Binding FocusPosition}" />
-                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
-                               Text="{Binding FocusPosition, StringFormat={}{0:0.###}}" />
-                    <Button Grid.Column="2" IsEnabled="{Binding HasManualFocus}"
-                            Command="{Binding ApplyFocusPositionCommand}" Content="Apply" />
-                  </Grid>
-                </Grid>
-              </StackPanel>
-            </Border>
-
-            <Border Classes="card">
-              <StackPanel Spacing="8">
-                <TextBlock Classes="section-title" Text="Zoom" />
-                <Grid ColumnDefinitions="*,70,Auto" ColumnSpacing="8">
-                  <Slider Minimum="{Binding ZoomMinimum}" Maximum="{Binding ZoomMaximum}"
-                          TickFrequency="{Binding ZoomStep}" IsEnabled="{Binding HasZoom}"
-                          Value="{Binding ZoomFactor}" />
-                  <TextBlock Grid.Column="1" VerticalAlignment="Center"
-                             Text="{Binding ZoomFactor, StringFormat={}{0:0.###}×}" />
-                  <Button Grid.Column="2" IsEnabled="{Binding HasZoom}"
-                          Command="{Binding ApplyZoomCommand}" Content="Apply" />
-                </Grid>
-              </StackPanel>
-            </Border>
-
-            <Border Classes="card">
-              <StackPanel Spacing="8">
-                <TextBlock Classes="section-title" Text="Light" />
-                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="8">
-                  <CheckBox Content="Enabled" IsEnabled="{Binding HasLight}" IsChecked="{Binding LightEnabled}" />
-                  <Button Grid.Column="1" HorizontalAlignment="Right" IsEnabled="{Binding HasLight}"
-                          Command="{Binding ApplyLightCommand}" Content="Apply" />
-                  <TextBlock Grid.Row="1" Classes="label" Text="Level" />
-                  <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,70" ColumnSpacing="8">
-                    <Slider Minimum="0" Maximum="1" TickFrequency="0.01"
-                            IsEnabled="{Binding HasVariableLight}" Value="{Binding LightLevel}" />
-                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
-                               Text="{Binding LightLevel, StringFormat={}{0:0.###}}" />
-                  </Grid>
-                </Grid>
-                <TextBlock Opacity="0.65" Text="Light means continuous camera illumination. Privacy indicators and still-image flash timing are not controlled." TextWrapping="Wrap" />
-              </StackPanel>
-            </Border>
-          </StackPanel>
-        </ScrollViewer>
-      </TabItem>
-
-      <TabItem Header="Diagnostics">
-        <Grid RowDefinitions="Auto,*" Margin="4">
-          <WrapPanel ItemSpacing="8" LineSpacing="8" Margin="0,0,0,8">
-            <Button Command="{Binding ExportDiagnosticsCommand}" Content="Export report" />
-            <Button Command="{Binding ClearLogCommand}" Content="Clear log" />
-            <Button Command="{Binding RefreshDevicesCommand}" Content="Re-enumerate" />
-            <Button Command="{Binding RefreshCapabilitiesCommand}" Content="Read capabilities" />
-          </WrapPanel>
-          <TextBox Grid.Row="1" Text="{Binding DiagnosticText}"
-                   IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
-                   FontFamily="monospace"
-                   ScrollViewer.VerticalScrollBarVisibility="Auto"
-                   ScrollViewer.HorizontalScrollBarVisibility="Auto" />
-        </Grid>
-      </TabItem>
-    </TabControl>
-  </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
 </UserControl>

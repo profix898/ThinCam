@@ -1,13 +1,14 @@
 using System.Runtime.InteropServices;
+using ThinCam;
 
-namespace ThinCam.Demo.Services;
+namespace ThinCamDemo.Services;
 
+/// <summary>Provides platform services for desktop hosts.</summary>
 public sealed class DefaultPlatformServices : IPlatformServices
 {
-    public string PlatformDescription =>
-        $"{RuntimeInformation.OSDescription.Trim()} / {RuntimeInformation.ProcessArchitecture} / .NET {Environment.Version}";
+    /// <inheritdoc />
+    public string PlatformDescription => $"{RuntimeInformation.OSDescription.Trim()} / {RuntimeInformation.ProcessArchitecture} / .NET {Environment.Version}";
 
-    public ValueTask<CameraPermissionStatus> RequestCameraPermissionAsync(
-        CancellationToken cancellationToken = default) =>
-        CameraPermissions.RequestAsync(cancellationToken);
+    /// <inheritdoc />
+    public ValueTask<CameraPermissionStatus> RequestCameraPermissionAsync(CancellationToken cancellationToken = default) => CameraPermissions.RequestAsync(cancellationToken);
 }

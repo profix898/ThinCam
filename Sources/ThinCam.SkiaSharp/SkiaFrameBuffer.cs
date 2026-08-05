@@ -1,5 +1,4 @@
 using SkiaSharp;
-using ThinCam;
 
 namespace ThinCam.SkiaSharp;
 
@@ -12,8 +11,10 @@ public sealed class SkiaFrameBuffer : IDisposable
 {
     private readonly object _lifecycleGate = new();
     private readonly object _updateGate = new();
+
     private readonly ReaderWriterLockSlim _frontLock =
         new(LockRecursionPolicy.NoRecursion);
+
     private SKBitmap? _front;
     private SKBitmap? _back;
     private long _version;
@@ -28,9 +29,8 @@ public sealed class SkiaFrameBuffer : IDisposable
     /// Copies a frame into the reusable back buffer and publishes it as the new
     /// front buffer. Only one update is processed at a time.
     /// </summary>
-    public void Update(
-        VideoFrame frame,
-        SkiaFrameTransform transform = SkiaFrameTransform.None)
+    public void Update(VideoFrame frame,
+                       SkiaFrameTransform transform = SkiaFrameTransform.None)
     {
         ArgumentNullException.ThrowIfNull(frame);
         EnterOperation();
@@ -66,7 +66,7 @@ public sealed class SkiaFrameBuffer : IDisposable
     }
 
     /// <summary>
-    /// Removes both reusable bitmaps and advances <see cref="Version"/>. Readers
+    /// Removes both reusable bitmaps and advances <see cref="Version" />. Readers
     /// in progress finish before their bitmap is released.
     /// </summary>
     public void Clear()
@@ -99,10 +99,10 @@ public sealed class SkiaFrameBuffer : IDisposable
     }
 
     /// <summary>
-    /// Invokes <paramref name="reader"/> with the current front bitmap while it
+    /// Invokes <paramref name="reader" /> with the current front bitmap while it
     /// is protected from concurrent reuse. The bitmap must not be retained after
-    /// the callback returns. The callback must not call <see cref="Update"/> or
-    /// <see cref="Dispose"/> on this buffer.
+    /// the callback returns. The callback must not call <see cref="Update" /> or
+    /// <see cref="Dispose" /> on this buffer.
     /// </summary>
     public bool TryUse(Action<SKBitmap> reader)
     {
@@ -111,7 +111,7 @@ public sealed class SkiaFrameBuffer : IDisposable
     }
 
     /// <summary>
-    /// Invokes <paramref name="reader"/> with the current front bitmap and the
+    /// Invokes <paramref name="reader" /> with the current front bitmap and the
     /// version that published that exact bitmap while both are protected by the
     /// same read lease. The bitmap must not be retained after the callback.
     /// </summary>
@@ -126,9 +126,7 @@ public sealed class SkiaFrameBuffer : IDisposable
             try
             {
                 if (_front is null)
-                {
                     return false;
-                }
 
                 reader(_front, Interlocked.Read(ref _version));
                 return true;
@@ -145,21 +143,19 @@ public sealed class SkiaFrameBuffer : IDisposable
     }
 
     /// <summary>
-    /// Draws the current frame into <paramref name="destination"/> while holding
-    /// a read lease. Returns <see langword="false"/> before the first frame arrives.
+    /// Draws the current frame into <paramref name="destination" /> while holding
+    /// a read lease. Returns <see langword="false" /> before the first frame arrives.
     /// </summary>
-    public bool TryDraw(
-        SKCanvas canvas,
-        SKRect destination,
-        SKPaint? paint = null)
+    public bool TryDraw(SKCanvas canvas,
+                        SKRect destination,
+                        SKPaint? paint = null)
     {
         ArgumentNullException.ThrowIfNull(canvas);
 
-        return TryUse(bitmap => canvas.DrawBitmap(
-            bitmap,
-            destination,
-            SKSamplingOptions.Default,
-            paint));
+        return TryUse(bitmap => canvas.DrawBitmap(bitmap,
+                                                  destination,
+                                                  SKSamplingOptions.Default,
+                                                  paint));
     }
 
     /// <summary>
@@ -172,26 +168,22 @@ public sealed class SkiaFrameBuffer : IDisposable
         TryUse(bitmap =>
         {
             snapshot = bitmap.Copy()
-                ?? throw new InvalidOperationException(
-                    "SkiaSharp could not copy the preview bitmap.");
+                       ?? throw new InvalidOperationException("SkiaSharp could not copy the preview bitmap.");
         });
         return snapshot;
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposeSignaled, 1) != 0)
-        {
             return;
-        }
 
         lock (_lifecycleGate)
         {
             _disposeRequested = true;
             while (_activeOperations != 0)
-            {
                 Monitor.Wait(_lifecycleGate);
-            }
         }
 
         _front?.Dispose();
@@ -216,9 +208,7 @@ public sealed class SkiaFrameBuffer : IDisposable
         {
             _activeOperations--;
             if (_disposeRequested && _activeOperations == 0)
-            {
                 Monitor.PulseAll(_lifecycleGate);
-            }
         }
     }
 
@@ -228,12 +218,9 @@ public sealed class SkiaFrameBuffer : IDisposable
             _back.Width == width &&
             _back.Height == height &&
             _back.ColorType == SKColorType.Bgra8888)
-        {
             return;
-        }
 
         _back?.Dispose();
-        _back = new SKBitmap(
-            VideoFrameSkiaExtensions.CreateImageInfo(width, height));
+        _back = new SKBitmap(VideoFrameSkiaExtensions.CreateImageInfo(width, height));
     }
 }

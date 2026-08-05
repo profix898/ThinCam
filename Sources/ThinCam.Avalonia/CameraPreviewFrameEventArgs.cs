@@ -3,11 +3,10 @@ namespace ThinCam.Avalonia;
 /// <summary>Describes a frame publication or render notification.</summary>
 public sealed class CameraPreviewFrameEventArgs : EventArgs
 {
-    internal CameraPreviewFrameEventArgs(
-        long version,
-        int pixelWidth,
-        int pixelHeight,
-        bool hasFrame)
+    internal CameraPreviewFrameEventArgs(long version,
+                                         int pixelWidth,
+                                         int pixelHeight,
+                                         bool hasFrame)
     {
         Version = version;
         PixelWidth = pixelWidth;

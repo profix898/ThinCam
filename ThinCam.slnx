@@ -1,37 +1,12 @@
 <Solution>
-  <Folder Name="/Build/">
-    <File Path="Build/build-linux.sh" />
-    <File Path="Build/build-macos.sh" />
-    <File Path="Build/build-windows.ps1" />
-    <File Path="Build/run-demo-macos.sh" />
-    <File Path="Build/setup-windows-wsl.ps1" />
-    <File Path="Build/ThinCam.targets" />
-    <File Path="Directory.Build.props" />
-    <File Path="Directory.Packages.props" />
-  </Folder>
-  <Folder Name="/Docs/">
-    <File Path="Docs/Abi.md" />
-    <File Path="Docs/Api.md" />
-    <File Path="Docs/Architecture.md" />
-    <File Path="Docs/Avalonia.md" />
-    <File Path="Docs/Building.md" />
-    <File Path="Docs/Controls.md" />
-    <File Path="Docs/SkiaSharp.md" />
-    <File Path="README.md" />
-  </Folder>
   <Folder Name="/Native/">
-    <File Path="Native/android/CMakeLists.txt" />
     <File Path="Native/android/thincam_android.cpp" />
-    <File Path="Native/apple/CMakeLists.txt" />
     <File Path="Native/apple/thincam_apple.mm" />
     <File Path="Native/common/thincam_common.cpp" />
     <File Path="Native/common/thincam_common.hpp" />
     <File Path="Native/include/thincam.h" />
-    <File Path="Native/linux/CMakeLists.txt" />
-    <File Path="Native/linux/tests/CMakeLists.txt" />
     <File Path="Native/linux/tests/pixel_convert_tests.cpp" />
     <File Path="Native/linux/thincam_linux.cpp" />
-    <File Path="Native/windows/CMakeLists.txt" />
     <File Path="Native/windows/thincam_windows.cpp" />
   </Folder>
   <Folder Name="/Samples/">

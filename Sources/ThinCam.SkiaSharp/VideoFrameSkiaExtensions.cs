@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using SkiaSharp;
-using ThinCam;
 
 namespace ThinCam.SkiaSharp;
 
@@ -12,15 +11,14 @@ public static class VideoFrameSkiaExtensions
     /// <summary>
     /// Returns the bitmap dimensions produced by the requested transform.
     /// </summary>
-    public static SKSizeI GetSkiaSize(
-        this VideoFrame frame,
-        SkiaFrameTransform transform = SkiaFrameTransform.None)
+    public static SKSizeI GetSkiaSize(this VideoFrame frame,
+                                      SkiaFrameTransform transform = SkiaFrameTransform.None)
     {
         ArgumentNullException.ThrowIfNull(frame);
         ValidateTransform(transform);
         ValidateFrame(frame);
 
-        int rotation = GetAppliedRotation(frame, transform);
+        var rotation = GetAppliedRotation(frame, transform);
         return rotation is 90 or 270
             ? new SKSizeI(frame.Height, frame.Width)
             : new SKSizeI(frame.Width, frame.Height);
@@ -28,12 +26,11 @@ public static class VideoFrameSkiaExtensions
 
     /// <summary>
     /// Allocates a Skia-owned BGRA8888 bitmap and copies the frame into it.
-    /// Use <see cref="CopyTo(VideoFrame, SKBitmap, SkiaFrameTransform)"/> or
-    /// <see cref="SkiaFrameBuffer"/> for live preview loops that should reuse memory.
+    /// Use <see cref="CopyTo(VideoFrame, SKBitmap, SkiaFrameTransform)" /> or
+    /// <see cref="SkiaFrameBuffer" /> for live preview loops that should reuse memory.
     /// </summary>
-    public static SKBitmap ToSKBitmap(
-        this VideoFrame frame,
-        SkiaFrameTransform transform = SkiaFrameTransform.None)
+    public static SKBitmap ToSKBitmap(this VideoFrame frame,
+                                      SkiaFrameTransform transform = SkiaFrameTransform.None)
     {
         ArgumentNullException.ThrowIfNull(frame);
 
@@ -56,26 +53,23 @@ public static class VideoFrameSkiaExtensions
     /// Creates an immutable Skia image containing a copy of the frame pixels.
     /// The caller owns the returned image and must dispose it.
     /// </summary>
-    public static SKImage ToSKImage(
-        this VideoFrame frame,
-        SkiaFrameTransform transform = SkiaFrameTransform.None)
+    public static SKImage ToSKImage(this VideoFrame frame,
+                                    SkiaFrameTransform transform = SkiaFrameTransform.None)
     {
         ArgumentNullException.ThrowIfNull(frame);
 
         using SKBitmap bitmap = frame.ToSKBitmap(transform);
         return SKImage.FromBitmap(bitmap)
-            ?? throw new InvalidOperationException(
-                "SkiaSharp could not create an image from the converted bitmap.");
+               ?? throw new InvalidOperationException("SkiaSharp could not create an image from the converted bitmap.");
     }
 
     /// <summary>
     /// Copies the frame into an existing Skia-owned BGRA8888 bitmap.
-    /// The destination dimensions must match <see cref="GetSkiaSize"/>.
+    /// The destination dimensions must match <see cref="GetSkiaSize" />.
     /// </summary>
-    public static unsafe void CopyTo(
-        this VideoFrame frame,
-        SKBitmap destination,
-        SkiaFrameTransform transform = SkiaFrameTransform.None)
+    public static unsafe void CopyTo(this VideoFrame frame,
+                                     SKBitmap destination,
+                                     SkiaFrameTransform transform = SkiaFrameTransform.None)
     {
         ArgumentNullException.ThrowIfNull(frame);
         ArgumentNullException.ThrowIfNull(destination);
@@ -88,112 +82,100 @@ public static class VideoFrameSkiaExtensions
         nint destinationPixels = destination.GetPixels();
         if (destinationPixels == 0)
         {
-            throw new InvalidOperationException(
-                "The destination SKBitmap does not expose writable pixel memory.");
+            throw new InvalidOperationException("The destination SKBitmap does not expose writable pixel memory.");
         }
 
         int destinationStride = destination.RowBytes;
-        int requiredDestinationRowLength = checked(requiredSize.Width * BytesPerPixel);
+        var requiredDestinationRowLength = checked(requiredSize.Width * BytesPerPixel);
         if (destinationStride < requiredDestinationRowLength)
         {
-            throw new InvalidOperationException(
-                "The destination SKBitmap row stride is smaller than its visible BGRA row.");
+            throw new InvalidOperationException("The destination SKBitmap row stride is smaller than its visible BGRA row.");
         }
 
-        ReadOnlySpan<byte> source = frame.Data.Span;
-        int rotation = GetAppliedRotation(frame, transform);
-        bool mirror = ShouldMirror(frame, transform);
+        var source = frame.Data.Span;
+        var rotation = GetAppliedRotation(frame, transform);
+        var mirror = ShouldMirror(frame, transform);
 
         if (rotation == 0 && !mirror)
         {
-            CopyRows(
-                source,
-                frame.Width,
-                frame.Height,
-                frame.Stride,
-                (byte*)destinationPixels,
-                destinationStride);
+            CopyRows(source,
+                     frame.Width,
+                     frame.Height,
+                     frame.Stride,
+                     (byte*) destinationPixels,
+                     destinationStride);
         }
         else
         {
-            CopyTransformed(
-                source,
-                frame.Width,
-                frame.Height,
-                frame.Stride,
-                (byte*)destinationPixels,
-                requiredSize.Width,
-                destinationStride,
-                rotation,
-                mirror);
+            CopyTransformed(source,
+                            frame.Width,
+                            frame.Height,
+                            frame.Stride,
+                            (byte*) destinationPixels,
+                            requiredSize.Width,
+                            destinationStride,
+                            rotation,
+                            mirror);
         }
 
         destination.NotifyPixelsChanged();
     }
 
     /// <summary>
-    /// Encodes one frame using SkiaSharp. The returned <see cref="SKData"/> is
+    /// Encodes one frame using SkiaSharp. The returned <see cref="SKData" /> is
     /// owned by the caller and must be disposed.
     /// </summary>
-    public static SKData Encode(
-        this VideoFrame frame,
-        SKEncodedImageFormat format,
-        int quality = 100,
-        SkiaFrameTransform transform = SkiaFrameTransform.None)
+    public static SKData Encode(this VideoFrame frame,
+                                SKEncodedImageFormat format,
+                                int quality = 100,
+                                SkiaFrameTransform transform = SkiaFrameTransform.None)
     {
         ArgumentNullException.ThrowIfNull(frame);
         ValidateQuality(quality);
 
         using SKImage image = frame.ToSKImage(transform);
         return image.Encode(format, quality)
-            ?? throw new InvalidOperationException($"SkiaSharp could not encode the frame as {format}.");
+               ?? throw new InvalidOperationException($"SkiaSharp could not encode the frame as {format}.");
     }
 
     /// <summary>
     /// Encodes one frame and copies the result into a managed byte array.
-    /// Prefer <see cref="Encode"/> when the caller can consume <see cref="SKData"/>
+    /// Prefer <see cref="Encode" /> when the caller can consume <see cref="SKData" />
     /// directly without another copy.
     /// </summary>
-    public static byte[] EncodeToBytes(
-        this VideoFrame frame,
-        SKEncodedImageFormat format,
-        int quality = 100,
-        SkiaFrameTransform transform = SkiaFrameTransform.None)
+    public static byte[] EncodeToBytes(this VideoFrame frame,
+                                       SKEncodedImageFormat format,
+                                       int quality = 100,
+                                       SkiaFrameTransform transform = SkiaFrameTransform.None)
     {
         using SKData data = frame.Encode(format, quality, transform);
         return data.ToArray();
     }
 
-    internal static SKImageInfo CreateImageInfo(int width, int height) =>
-        new(width, height, SKColorType.Bgra8888, SKAlphaType.Opaque);
+    internal static SKImageInfo CreateImageInfo(int width, int height) => new(width, height, SKColorType.Bgra8888, SKAlphaType.Opaque);
 
     private static void ValidateFrame(VideoFrame frame)
     {
         if (frame.PixelFormat != PixelFormat.Bgra32)
         {
-            throw new NotSupportedException(
-                $"ThinCam.SkiaSharp supports BGRA32 frames, not {frame.PixelFormat}.");
+            throw new NotSupportedException($"ThinCam.SkiaSharp supports BGRA32 frames, not {frame.PixelFormat}.");
         }
 
         if (frame.Width <= 0 || frame.Height <= 0)
-        {
             throw new ArgumentException("The frame dimensions must be positive.", nameof(frame));
-        }
 
-        int visibleRowLength = checked(frame.Width * BytesPerPixel);
+        var visibleRowLength = checked(frame.Width * BytesPerPixel);
         if (frame.Stride < visibleRowLength)
         {
-            throw new ArgumentException(
-                "The frame stride is smaller than its visible BGRA row.",
-                nameof(frame));
+            throw new ArgumentException("The frame stride is smaller than its visible BGRA row.",
+                                        nameof(frame));
         }
 
-        long requiredLength = checked((long)frame.Stride * frame.Height);
+        var requiredLength = checked((long) frame.Stride * frame.Height);
         if (frame.DataLength < requiredLength)
         {
-            throw new ArgumentException(
-                "The frame data is smaller than height multiplied by stride.",
-                nameof(frame));
+            throw new ArgumentException("The frame data is smaller than height multiplied by stride.",
+                                        nameof(frame));
         }
 
         // Accessing Data here also gives callers an immediate, predictable
@@ -205,16 +187,14 @@ public static class VideoFrameSkiaExtensions
     {
         if (destination.Width != size.Width || destination.Height != size.Height)
         {
-            throw new ArgumentException(
-                $"The destination bitmap must be {size.Width}x{size.Height}.",
-                nameof(destination));
+            throw new ArgumentException($"The destination bitmap must be {size.Width}x{size.Height}.",
+                                        nameof(destination));
         }
 
         if (destination.ColorType != SKColorType.Bgra8888)
         {
-            throw new ArgumentException(
-                "The destination bitmap must use SKColorType.Bgra8888.",
-                nameof(destination));
+            throw new ArgumentException("The destination bitmap must use SKColorType.Bgra8888.",
+                                        nameof(destination));
         }
     }
 
@@ -222,84 +202,74 @@ public static class VideoFrameSkiaExtensions
     {
         const SkiaFrameTransform known = SkiaFrameTransform.Presentation;
         if ((transform & ~known) != 0)
-        {
             throw new ArgumentOutOfRangeException(nameof(transform));
-        }
     }
 
     private static void ValidateQuality(int quality)
     {
         if (quality is < 0 or > 100)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(quality),
-                quality,
-                "Encoding quality must be between 0 and 100.");
+            throw new ArgumentOutOfRangeException(nameof(quality),
+                                                  quality,
+                                                  "Encoding quality must be between 0 and 100.");
         }
     }
 
     private static int GetAppliedRotation(VideoFrame frame, SkiaFrameTransform transform)
     {
         if ((transform & SkiaFrameTransform.ApplyRotation) == 0)
-        {
             return 0;
-        }
 
-        int normalized = ((frame.RotationDegrees % 360) + 360) % 360;
+        var normalized = ((frame.RotationDegrees % 360) + 360) % 360;
         if (normalized is not (0 or 90 or 180 or 270))
         {
-            throw new NotSupportedException(
-                $"ThinCam.SkiaSharp supports right-angle rotation metadata; received {frame.RotationDegrees} degrees.");
+            throw new NotSupportedException($"ThinCam.SkiaSharp supports right-angle rotation metadata; received {frame.RotationDegrees} degrees.");
         }
 
         return normalized;
     }
 
-    private static bool ShouldMirror(VideoFrame frame, SkiaFrameTransform transform) =>
-        frame.IsMirrored && (transform & SkiaFrameTransform.ApplyMirroring) != 0;
+    private static bool ShouldMirror(VideoFrame frame, SkiaFrameTransform transform) => frame.IsMirrored && (transform & SkiaFrameTransform.ApplyMirroring) != 0;
 
-    private static unsafe void CopyRows(
-        ReadOnlySpan<byte> source,
-        int width,
-        int height,
-        int sourceStride,
-        byte* destination,
-        int destinationStride)
+    private static unsafe void CopyRows(ReadOnlySpan<byte> source,
+                                        int width,
+                                        int height,
+                                        int sourceStride,
+                                        byte* destination,
+                                        int destinationStride)
     {
-        int rowLength = checked(width * BytesPerPixel);
+        var rowLength = checked(width * BytesPerPixel);
 
-        for (int y = 0; y < height; y++)
+        for (var y = 0; y < height; y++)
         {
-            ReadOnlySpan<byte> sourceRow = source.Slice(
-                checked(y * sourceStride),
-                rowLength);
-            Span<byte> destinationRow = new(
-                destination + checked(y * destinationStride),
-                rowLength);
+            var sourceRow = source.Slice(checked(y * sourceStride),
+                                         rowLength);
+            Span<byte> destinationRow = new(destination + checked(y * destinationStride),
+                                            rowLength);
             sourceRow.CopyTo(destinationRow);
         }
     }
 
-    private static unsafe void CopyTransformed(
-        ReadOnlySpan<byte> source,
-        int sourceWidth,
-        int sourceHeight,
-        int sourceStride,
-        byte* destination,
-        int destinationWidth,
-        int destinationStride,
-        int rotation,
-        bool mirror)
+    private static unsafe void CopyTransformed(ReadOnlySpan<byte> source,
+                                               int sourceWidth,
+                                               int sourceHeight,
+                                               int sourceStride,
+                                               byte* destination,
+                                               int destinationWidth,
+                                               int destinationStride,
+                                               int rotation,
+                                               bool mirror)
     {
-        for (int sourceY = 0; sourceY < sourceHeight; sourceY++)
+        for (var sourceY = 0; sourceY < sourceHeight; sourceY++)
         {
-            int sourceRowOffset = checked(sourceY * sourceStride);
+            var sourceRowOffset = checked(sourceY * sourceStride);
 
-            for (int sourceX = 0; sourceX < sourceWidth; sourceX++)
+            for (var sourceX = 0; sourceX < sourceWidth; sourceX++)
             {
                 int rotatedX;
                 int rotatedY;
 
+                // Map each source pixel through clockwise rotation before horizontal mirroring.
                 switch (rotation)
                 {
                     case 0:
@@ -322,13 +292,13 @@ public static class VideoFrameSkiaExtensions
                         throw new UnreachableException();
                 }
 
-                int destinationX = mirror
+                var destinationX = mirror
                     ? destinationWidth - 1 - rotatedX
                     : rotatedX;
 
-                int sourceOffset = checked(sourceRowOffset + sourceX * BytesPerPixel);
-                int destinationOffset = checked(
-                    rotatedY * destinationStride + destinationX * BytesPerPixel);
+                var sourceOffset = checked(sourceRowOffset + (sourceX * BytesPerPixel));
+                var destinationOffset = checked(
+                    (rotatedY * destinationStride) + (destinationX * BytesPerPixel));
 
                 destination[destinationOffset] = source[sourceOffset];
                 destination[destinationOffset + 1] = source[sourceOffset + 1];

@@ -4,29 +4,36 @@ using ThinCam.Interop;
 
 namespace ThinCam;
 
+/// <summary>
+/// Provides access to camera devices available on the system.
+/// </summary>
 public static class CameraDevices
 {
+    /// <summary>
+    /// Enumerates the available camera devices.
+    /// </summary>
+    /// <returns>The available camera devices.</returns>
     public static IReadOnlyList<CameraDevice> Enumerate()
     {
         NativeHelpers.EnsureAbi();
         var state = new DeviceEnumerationState();
-        GCHandle handle = GCHandle.Alloc(state);
+        var handle = GCHandle.Alloc(state);
 
         try
         {
             unsafe
             {
-                NativeStatus result = NativeMethods.EnumerateDevices(
-                    (nint)(delegate* unmanaged[Cdecl]<NativeDeviceInfo*, nint, void>)&OnDevice,
-                    GCHandle.ToIntPtr(handle));
+                // Keep managed enumeration state rooted while native code invokes the callback synchronously.
+                var result = NativeMethods.EnumerateDevices((nint) (delegate* unmanaged[Cdecl]<NativeDeviceInfo*, nint, void>) &OnDevice,
+                                                            GCHandle.ToIntPtr(handle));
 
-                if (result != NativeStatus.Ok) throw NativeHelpers.Exception(result);
+                if (result != NativeStatus.Ok)
+                    throw NativeHelpers.Exception(result);
                 if (state.Error is not null)
                 {
-                    throw new CameraException(
-                        CameraErrorCode.Platform,
-                        "Failed while processing an enumerated camera device.",
-                        state.Error);
+                    throw new CameraException(CameraErrorCode.Platform,
+                                              "Failed while processing an enumerated camera device.",
+                                              state.Error);
                 }
             }
         }
@@ -38,13 +45,16 @@ public static class CameraDevices
         return state.Devices;
     }
 
+    /// <summary>
+    /// Gets the default camera device, or the first available device when no default is marked.
+    /// </summary>
     public static CameraDevice? Default
     {
         get
         {
-            IReadOnlyList<CameraDevice> devices = Enumerate();
+            var devices = Enumerate();
             return devices.FirstOrDefault(static device => device.IsDefault)
-                ?? (devices.Count == 0 ? null : devices[0]);
+                   ?? (devices.Count == 0 ? null : devices[0]);
         }
     }
 
@@ -54,31 +64,35 @@ public static class CameraDevices
         DeviceEnumerationState? state = null;
         try
         {
-            if (native is null || native->StructSize < (uint)sizeof(NativeDeviceInfo)) return;
+            if (native is null || native->StructSize < (uint) sizeof(NativeDeviceInfo))
+                return;
 
-            GCHandle handle = GCHandle.FromIntPtr(userData);
+            var handle = GCHandle.FromIntPtr(userData);
             state = handle.Target as DeviceEnumerationState;
-            if (state is null || state.Error is not null) return;
+            if (state is null || state.Error is not null)
+                return;
 
-            string id = NativeHelpers.Utf8(native->Id);
-            if (string.IsNullOrWhiteSpace(id)) return;
+            var id = NativeHelpers.Utf8(native->Id);
+            if (String.IsNullOrWhiteSpace(id))
+                return;
 
-            string name = NativeHelpers.Utf8(native->Name);
-            state.Devices.Add(new CameraDevice(
-                id,
-                string.IsNullOrWhiteSpace(name) ? id : name,
-                (CameraPosition)(int)native->Position,
-                native->IsDefault != 0));
+            var name = NativeHelpers.Utf8(native->Name);
+            state.Devices.Add(new CameraDevice(id,
+                                               String.IsNullOrWhiteSpace(name) ? id : name,
+                                               (CameraPosition) (int) native->Position,
+                                               native->IsDefault != 0));
         }
         catch (Exception exception)
         {
-            if (state is not null) state.Error = exception;
+            if (state is not null)
+                state.Error = exception;
         }
     }
 
     private sealed class DeviceEnumerationState
     {
         internal List<CameraDevice> Devices { get; } = [];
+
         internal Exception? Error { get; set; }
     }
 }

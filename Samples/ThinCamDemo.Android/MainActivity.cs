@@ -1,25 +1,24 @@
-using Android.App;
 using Android.Content.PM;
-using Android.OS;
 using Avalonia.Android;
-using ThinCam.Demo.Services;
+using ThinCamDemo.Services;
 
-namespace ThinCam.Demo.Android;
+namespace ThinCamDemo.Android;
 
-[Activity(
-    Label = "ThinCam Demo",
-    Theme = "@android:style/Theme.Material.Light.NoActionBar",
-    MainLauncher = true,
-    Exported = true,
-    ConfigurationChanges =
-        ConfigChanges.Orientation |
-        ConfigChanges.ScreenSize |
-        ConfigChanges.UiMode |
-        ConfigChanges.ScreenLayout |
-        ConfigChanges.SmallestScreenSize |
-        ConfigChanges.Density)]
+/// <summary>Hosts the demo's main Android activity.</summary>
+[Activity(Label = "ThinCam Demo",
+          Theme = "@android:style/Theme.Material.Light.NoActionBar",
+          MainLauncher = true,
+          Exported = true,
+          ConfigurationChanges =
+              ConfigChanges.Orientation |
+              ConfigChanges.ScreenSize |
+              ConfigChanges.UiMode |
+              ConfigChanges.ScreenLayout |
+              ConfigChanges.SmallestScreenSize |
+              ConfigChanges.Density)]
 public sealed class MainActivity : AvaloniaMainActivity
 {
+    /// <inheritdoc />
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         DemoServices.Platform = new AndroidPlatformServices(this);

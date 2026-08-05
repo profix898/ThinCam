@@ -4,22 +4,25 @@ using ThinCam.Interop;
 
 namespace ThinCam;
 
+/// <summary>Provides camera permission status and request operations.</summary>
 public static partial class CameraPermissions
 {
+    /// <summary>Gets the current camera permission status.</summary>
     public static CameraPermissionStatus GetStatus()
     {
 #if ANDROID
         return GetAndroidStatus();
 #else
         NativeHelpers.EnsureAbi();
-        NativeStatus result = NativeMethods.GetPermissionStatus(out NativePermissionStatus status);
-        if (result != NativeStatus.Ok) throw NativeHelpers.Exception(result);
-        return (CameraPermissionStatus)(int)status;
+        var result = NativeMethods.GetPermissionStatus(out var status);
+        if (result != NativeStatus.Ok)
+            throw NativeHelpers.Exception(result);
+        return (CameraPermissionStatus) (int) status;
 #endif
     }
 
-    public static async ValueTask<CameraPermissionStatus> RequestAsync(
-        CancellationToken cancellationToken = default)
+    /// <summary>Requests camera permission when the platform supports direct requests.</summary>
+    public static async ValueTask<CameraPermissionStatus> RequestAsync(CancellationToken cancellationToken = default)
     {
 #if ANDROID
         await Task.CompletedTask;
@@ -30,16 +33,14 @@ public static partial class CameraPermissions
 #else
         cancellationToken.ThrowIfCancellationRequested();
         NativeHelpers.EnsureAbi();
-        var completion = new TaskCompletionSource<CameraPermissionStatus>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource<CameraPermissionStatus>(TaskCreationOptions.RunContinuationsAsynchronously);
         var request = new PermissionRequest(completion);
-        GCHandle handle = GCHandle.Alloc(request);
+        var handle = GCHandle.Alloc(request);
 
         unsafe
         {
-            NativeStatus result = NativeMethods.RequestPermission(
-                (nint)(delegate* unmanaged[Cdecl]<NativePermissionStatus, nint, void>)&OnPermissionCompleted,
-                GCHandle.ToIntPtr(handle));
+            var result = NativeMethods.RequestPermission((nint) (delegate* unmanaged[Cdecl]<NativePermissionStatus, nint, void>) &OnPermissionCompleted,
+                                                         GCHandle.ToIntPtr(handle));
 
             if (result != NativeStatus.Ok)
             {
@@ -61,9 +62,7 @@ public static partial class CameraPermissions
         {
             handle = GCHandle.FromIntPtr(userData);
             if (handle.Target is PermissionRequest request)
-            {
-                request.Completion.TrySetResult((CameraPermissionStatus)(int)status);
-            }
+                request.Completion.TrySetResult((CameraPermissionStatus) (int) status);
         }
         catch
         {
@@ -73,7 +72,8 @@ public static partial class CameraPermissions
         {
             try
             {
-                if (handle.IsAllocated) handle.Free();
+                if (handle.IsAllocated)
+                    handle.Free();
             }
             catch
             {
@@ -82,8 +82,7 @@ public static partial class CameraPermissions
         }
     }
 
-    private sealed class PermissionRequest(
-        TaskCompletionSource<CameraPermissionStatus> completion)
+    private sealed class PermissionRequest(TaskCompletionSource<CameraPermissionStatus> completion)
     {
         internal TaskCompletionSource<CameraPermissionStatus> Completion { get; } = completion;
     }

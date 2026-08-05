@@ -4,7 +4,7 @@ using ThinCam.SkiaSharp;
 namespace ThinCam.Avalonia;
 
 /// <summary>
-/// Thread-safe presentation source used by <see cref="CameraPreview"/>.
+/// Thread-safe presentation source used by <see cref="CameraPreview" />.
 /// Capture code may publish frames from a worker thread while Avalonia renders
 /// the most recently published frame on its UI/render thread.
 /// </summary>
@@ -28,12 +28,11 @@ public sealed class CameraPreviewSource : IDisposable
 
     /// <summary>
     /// Copies a ThinCam frame into reusable Skia-owned memory and publishes it.
-    /// The caller retains ownership of <paramref name="frame"/> and may dispose it
+    /// The caller retains ownership of <paramref name="frame" /> and may dispose it
     /// immediately after this method returns.
     /// </summary>
-    public void Publish(
-        VideoFrame frame,
-        SkiaFrameTransform transform = SkiaFrameTransform.Presentation)
+    public void Publish(VideoFrame frame,
+                        SkiaFrameTransform transform = SkiaFrameTransform.Presentation)
     {
         ArgumentNullException.ThrowIfNull(frame);
         ThrowIfDisposed();
@@ -41,11 +40,10 @@ public sealed class CameraPreviewSource : IDisposable
         SKSizeI size = frame.GetSkiaSize(transform);
         _buffer.Update(frame, transform);
         Volatile.Write(ref _hasFrame, 1);
-        RaiseFrameChanged(new CameraPreviewFrameEventArgs(
-            _buffer.Version,
-            size.Width,
-            size.Height,
-            hasFrame: true));
+        RaiseFrameChanged(new CameraPreviewFrameEventArgs(_buffer.Version,
+                                                          size.Width,
+                                                          size.Height,
+                                                          true));
     }
 
     /// <summary>Removes the currently published frame.</summary>
@@ -54,11 +52,10 @@ public sealed class CameraPreviewSource : IDisposable
         ThrowIfDisposed();
         _buffer.Clear();
         Volatile.Write(ref _hasFrame, 0);
-        RaiseFrameChanged(new CameraPreviewFrameEventArgs(
-            _buffer.Version,
-            pixelWidth: 0,
-            pixelHeight: 0,
-            hasFrame: false));
+        RaiseFrameChanged(new CameraPreviewFrameEventArgs(_buffer.Version,
+                                                          0,
+                                                          0,
+                                                          false));
     }
 
     /// <summary>
@@ -81,9 +78,7 @@ public sealed class CameraPreviewSource : IDisposable
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
-        {
             return;
-        }
 
         Volatile.Write(ref _hasFrame, 0);
         _buffer.Dispose();
@@ -92,11 +87,9 @@ public sealed class CameraPreviewSource : IDisposable
 
     private void RaiseFrameChanged(CameraPreviewFrameEventArgs eventArgs)
     {
-        EventHandler<CameraPreviewFrameEventArgs>? handlers = FrameChanged;
+        var handlers = FrameChanged;
         if (handlers is null)
-        {
             return;
-        }
 
         // A UI notification must never break the capture loop. Invoke handlers
         // independently so one faulty subscriber does not suppress the others.
@@ -113,6 +106,5 @@ public sealed class CameraPreviewSource : IDisposable
         }
     }
 
-    private void ThrowIfDisposed() =>
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
 }

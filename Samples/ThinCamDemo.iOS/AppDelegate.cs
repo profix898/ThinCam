@@ -1,15 +1,14 @@
 using Avalonia;
 using Avalonia.iOS;
-using Foundation;
-using ThinCam.Demo;
 
-namespace ThinCam.Demo.iOS;
+namespace ThinCamDemo.iOS;
 
+/// <summary>Hosts the Avalonia application on iOS.</summary>
 [Register("AppDelegate")]
 #pragma warning disable CA1711
-public partial class AppDelegate : AvaloniaAppDelegate<App>
+public class AppDelegate : AvaloniaAppDelegate<App>
 #pragma warning restore CA1711
 {
-    protected override AppBuilder CustomizeAppBuilder(AppBuilder builder) =>
-        base.CustomizeAppBuilder(builder).WithInterFont();
+    /// <inheritdoc />
+    protected override AppBuilder CustomizeAppBuilder(AppBuilder builder) => base.CustomizeAppBuilder(builder).WithInterFont();
 }

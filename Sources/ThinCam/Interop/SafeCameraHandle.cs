@@ -5,7 +5,7 @@ namespace ThinCam.Interop;
 internal sealed class SafeCameraHandle : SafeHandleZeroOrMinusOneIsInvalid
 {
     internal SafeCameraHandle(nint handle)
-        : base(ownsHandle: true)
+        : base(true)
     {
         SetHandle(handle);
     }

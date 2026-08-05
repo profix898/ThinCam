@@ -13,9 +13,7 @@ internal sealed class FrameQueue
     {
         _channel = Channel.CreateBounded<VideoFrame>(new BoundedChannelOptions(capacity)
         {
-            SingleReader = true,
-            SingleWriter = false,
-            FullMode = BoundedChannelFullMode.Wait,
+            SingleReader = true, SingleWriter = false, FullMode = BoundedChannelFullMode.Wait,
             AllowSynchronousContinuations = false
         });
     }
@@ -30,9 +28,10 @@ internal sealed class FrameQueue
                 return;
             }
 
+            // Evict stale frames when full to keep preview latency low.
             while (!_channel.Writer.TryWrite(frame))
             {
-                if (_channel.Reader.TryRead(out VideoFrame? stale))
+                if (_channel.Reader.TryRead(out var stale))
                 {
                     stale.Dispose();
                     continue;
@@ -48,7 +47,8 @@ internal sealed class FrameQueue
     {
         lock (_gate)
         {
-            if (_completed) return;
+            if (_completed)
+                return;
             _completed = true;
             _channel.Writer.TryComplete(error);
         }
@@ -58,19 +58,14 @@ internal sealed class FrameQueue
     {
         lock (_gate)
         {
-            while (_channel.Reader.TryRead(out VideoFrame? frame))
-            {
+            while (_channel.Reader.TryRead(out var frame))
                 frame.Dispose();
-            }
         }
     }
 
-    internal async IAsyncEnumerable<VideoFrame> ReadAllAsync(
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+    internal async IAsyncEnumerable<VideoFrame> ReadAllAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (VideoFrame frame in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
-        {
+        await foreach (var frame in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
             yield return frame;
-        }
     }
 }

@@ -5,9 +5,9 @@ Avalonia demo application that consumes it. The control library is intentionally
 separate from both the raw capture core and the demo so application developers can
 reuse the preview pipeline without copying sample-specific code.
 
-For raw frame conversion and image encoding, see [SKIASHARP.md](SKIASHARP.md). For
-camera lifecycle and controls, see [API.md](API.md) and [CONTROLS.md](CONTROLS.md).
-For native and managed build prerequisites, see [BUILDING.md](BUILDING.md).
+For raw frame conversion and image encoding, see [SkiaSharp.md](SkiaSharp.md). For
+camera lifecycle and controls, see [Api.md](Api.md) and [Controls.md](Controls.md).
+For native and managed build prerequisites, see [Building.md](Building.md).
 
 ## Contents
 
@@ -531,8 +531,11 @@ signature, and opens the bundle.
 
 ```bash
 dotnet workload install android
-export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
-./Build/build-macos.sh
+
+# On Linux/WSL: build-linux.sh builds Linux + Android native libraries.
+# On macOS: build-macos.sh builds macOS + iOS + Android native libraries.
+# The NDK is auto-discovered from ANDROID_NDK_HOME or the Android SDK.
+./Build/build-linux.sh   # or: ./Build/build-macos.sh
 
 dotnet build \
   Samples/ThinCamDemo.Android/ThinCamDemo.Android.csproj \

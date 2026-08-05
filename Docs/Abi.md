@@ -2,7 +2,7 @@
 
 The managed package and every platform backend communicate through the versioned C interface in `Native/include/thincam.h`.
 
-For the full architecture and platform implementations, see [ARCHITECTURE.md](ARCHITECTURE.md). For native compilation and artifact staging, see [BUILDING.md](BUILDING.md).
+For the full architecture and platform implementations, see [Architecture.md](Architecture.md). For native compilation and artifact staging, see [Building.md](Building.md).
 
 ## ABI goals
 
@@ -265,4 +265,4 @@ Any ABI change should update:
 3. P/Invoke declarations in `NativeMethods.cs`.
 4. Every native backend.
 5. ABI smoke tests and symbol checks.
-6. This document and `ARCHITECTURE.md`.
+6. This document and `Architecture.md`.

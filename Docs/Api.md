@@ -1,6 +1,6 @@
 # ThinCam public API guide
 
-This guide describes the managed API exposed by `Sources/ThinCam`. For implementation details, see [ARCHITECTURE.md](ARCHITECTURE.md). For native and managed build instructions, see [BUILDING.md](BUILDING.md).
+This guide describes the managed API exposed by `Sources/ThinCam`. For implementation details, see [Architecture.md](Architecture.md). For native and managed build instructions, see [Building.md](Building.md). For camera controls (Exposure, Focus, Zoom, Light), see [Controls.md](Controls.md).
 
 ## Contents
 
@@ -207,7 +207,7 @@ The requested width, height, and FPS are preferences. The backend may select a d
 | `Width` | 640 | Must be greater than zero |
 | `Height` | 480 | Must be greater than zero |
 | `FramesPerSecond` | 30 | Must be greater than zero |
-| `PixelFormat` | `Bgra32` | BGRA32 is the only supported value in version 1 |
+| `PixelFormat` | `Bgra32` | BGRA32 is the only supported value |
 | `QueueCapacity` | 2 | Must be between 1 and 32 |
 
 A smaller queue reduces latency. A larger queue can absorb brief processing stalls but retains more memory and older frames.
@@ -218,7 +218,7 @@ A smaller queue reduces latency. A larger queue can absorb brief processing stal
 
 ### Startup cancellation
 
-The cancellation token is checked before native startup begins. Once the platform startup operation is running, version 1 does not interrupt it. Native startup has platform-specific internal timeouts where needed.
+The cancellation token is checked before native startup begins. Once the platform startup operation is running, it does not interrupt it. Native startup has platform-specific internal timeouts where needed.
 
 ## 6. Reading frames
 
@@ -403,13 +403,11 @@ Do not pass the same disposable `VideoFrame` to multiple components unless owner
 The public API does not yet include:
 
 - Supported-format enumeration.
-- Camera controls.
 - Still-photo capture.
 - Audio.
 - Recording or encoding.
 - Hot-plug events.
-- UI preview components.
 - Zero-copy GPU buffers.
 - Multiple frame readers.
 
-These are intentionally outside the version-one contract.
+Camera controls (Exposure, Focus, Zoom, Light) are implemented and documented in [Controls.md](Controls.md). Image encoding and reusable preview buffers are implemented in `ThinCam.SkiaSharp` ([SkiaSharp.md](SkiaSharp.md)). The reusable Avalonia preview control is implemented in `ThinCam.Avalonia` ([Avalonia.md](Avalonia.md)).

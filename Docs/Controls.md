@@ -329,7 +329,7 @@ tc_status tc_camera_set_control(
     const tc_control_value* value);
 ```
 
-The ABI uses generic typed values so new controls can be added without adding a function per property. See [ABI.md](ABI.md) for binary layout and versioning rules.
+The ABI uses generic typed values so new controls can be added without adding a function per property. See [Abi.md](Abi.md) for binary layout and versioning rules.
 
 ## Current limitations
 

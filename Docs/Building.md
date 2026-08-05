@@ -27,7 +27,7 @@ ThinCam is not built as one universal binary. Each native backend must be built 
 1. Install platform native toolchain
 2. Build native backend
 3. Verify native file is staged under Build/Native/runtimes
-4. Install .NET 10 SDK selected by global.json
+4. Install .NET 10 SDK
 5. Install Android/iOS workloads when building mobile targets
 6. Build the desired ThinCam target framework
 7. build/run a sample or host application
@@ -38,18 +38,12 @@ ThinCam is not built as one universal binary. Each native backend must be built 
 
 ### .NET SDK
 
-`global.json` selects:
-
-```json
-{
-  "sdk": {
-    "version": "10.0.100",
-    "rollForward": "latestFeature",
-    "allowPrerelease": false
-  }
-}
-```
-
+The project targets .NET 10. Install the SDK from <https://dotnet.microsoft.com/download/dotnet/10.0>.
+The repository does not pin a specific SDK version via `global.json`; any .NET 10 SDK
+(10.0.300 or newer) is sufficient. The `Directory.Build.props` file sets the target
+frameworks (`net8.0;net10.0-android;net10.0-ios`) and the `Directory.Packages.props`
+file manages NuGet package versions centrally. A repo-local `NuGet.config` pins a single
+package source (nuget.org) so restore is hermetic regardless of machine-level sources.
 Install a .NET 10 SDK compatible with this policy. The SDK builds both the `net8.0` desktop target and the .NET 10 mobile targets.
 
 Check the selected SDK:
@@ -439,7 +433,7 @@ nm -gU Build/Native/runtimes/ios-arm64/native/libthincam.a | grep '_tc_'
 Install:
 
 - Android SDK command-line tools.
-- Android NDK r26 or newer; CI uses `r27c`.
+- Android NDK r26 or newer; CI uses r27d.
 - CMake 3.22 or newer.
 - Ninja.
 
@@ -806,7 +800,7 @@ dotnet test Tests/ThinCamTests.SkiaSharp/ThinCamTests.SkiaSharp.csproj -c Releas
 dotnet test Tests/ThinCamTests.Avalonia/ThinCamTests.Avalonia.csproj -c Release
 ```
 
-See [AVALONIA.md](AVALONIA.md) for the reusable control architecture, UI threading, demo features, and platform details.
+See [Avalonia.md](Avalonia.md) for the reusable control architecture, UI threading, demo features, and platform details.
 
 ## 9. Publishing a desktop consumer
 
@@ -878,36 +872,40 @@ Before a full release package, stage every supported native artifact and verify 
 
 ### 10.2 Pack with the script
 
+Package versioning is driven by [MinVer](https://github.com/adamralph/minver) from git tags
+(prefix `v`). Create a tag like `v0.4.2` to produce a release package, or run without a tag
+for a pre-release (`0.1.0-dev.N`).
+
 ```bash
 chmod +x Build/build-macos.sh
-VERSION=0.1.0 ./Build/build-macos.sh
+./Build/build-macos.sh
 ```
 
 Output:
 
 ```text
-Build/Native/artifacts/packages/ThinCam.0.1.0.nupkg
-Build/Native/artifacts/packages/ThinCam.SkiaSharp.0.1.0.nupkg
-Build/Native/artifacts/packages/ThinCam.Avalonia.0.1.0.nupkg
+Build/Native/artifacts/packages/ThinCam.0.1.0.216.nupkg
+Build/Native/artifacts/packages/ThinCam.SkiaSharp.0.1.0.216.nupkg
+Build/Native/artifacts/packages/ThinCam.Avalonia.0.1.0.216.nupkg
 ```
 
-Default version when `VERSION` is omitted:
+To override the version explicitly, set `VERSION`:
 
-```text
-0.1.0-dev
+```bash
+VERSION=0.4.2 ./Build/build-macos.sh
 ```
 
 ### 10.3 Pack directly
 
 ```bash
 dotnet pack Sources/ThinCam/ThinCam.csproj \
-  -c Release -p:PackageVersion=0.1.0 -o Build/Native/artifacts/packages
+  -c Release -o Build/Native/artifacts/packages
 
 dotnet pack Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj \
-  -c Release -p:PackageVersion=0.1.0 -o Build/Native/artifacts/packages
+  -c Release -o Build/Native/artifacts/packages
 
 dotnet pack Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
-  -c Release -p:PackageVersion=0.1.0 -o Build/Native/artifacts/packages
+  -c Release -o Build/Native/artifacts/packages
 ```
 
 Packing the multi-target project requires the Android and iOS workloads because all target frameworks are evaluated. For a complete cross-platform package, perform the final pack on macOS with both workloads installed and with all native artifacts staged.
@@ -950,56 +948,45 @@ Publish for the target RID and verify the native library is copied.
 
 ## 11. CI-equivalent commands
 
-### Linux job
+The CI pipeline (`.github/workflows/build.yml`) runs the following jobs.
+
+### Test (Ubuntu)
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y ninja-build libv4l-dev
-./Build/build-linux.sh
-
-dotnet build Sources/ThinCam/ThinCam.csproj \
-  -c Release \
-  -p:ThinCamTargetFrameworks=net8.0 \
-  -f net8.0
-
-dotnet build Samples/ThinCamDemo.Console/ThinCamDemo.Console.csproj \
-  -c Release
-
-dotnet build Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj \
-  -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
-
-dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
-  -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
-
-dotnet build Samples/ThinCamDemo.Desktop/ThinCamDemo.Desktop.csproj \
-  -c Release -r linux-x64
-
 dotnet test Tests/ThinCamTests.SkiaSharp/ThinCamTests.SkiaSharp.csproj -c Release
 dotnet test Tests/ThinCamTests.Avalonia/ThinCamTests.Avalonia.csproj -c Release
 ```
 
-### Windows job
+### Native Linux + Android (Ubuntu)
 
-```powershell
-./Build/build-windows.ps1
+```bash
+sudo apt-get update
+sudo apt-get install -y ninja-build build-essential linux-libc-dev
 
-dotnet build Sources/ThinCam/ThinCam.csproj `
-  -c Release `
-  -p:ThinCamTargetFrameworks=net8.0 `
-  -f net8.0
+# Android NDK (r27d or newer)
+sdkmanager "ndk;27.3.13750724"
+export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
 
-dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj `
-  -c Release -p:ThinCamTargetFrameworks=net8.0 -f net8.0
-
-dotnet build Samples/ThinCamDemo.Desktop/ThinCamDemo.Desktop.csproj `
-  -c Release -r win-x64
+# Build Linux and Android native libraries (skips packaging)
+./Build/build-linux.sh --skip-pack
 ```
 
-### macOS/iOS job
+### Native Windows (Windows)
+
+```powershell
+# Build Windows native libraries only (Android skipped in CI to avoid
+# duplicate artifacts with the Linux job)
+./Build/build-windows.ps1 -SkipPack -SkipAndroid
+```
+
+### Native Apple (macOS)
 
 ```bash
 brew install ninja
-./Build/build-macos.sh
+
+# Build macOS and iOS native libraries (Android skipped in CI)
+./Build/build-macos.sh --skip-pack --skip-android
+
 dotnet workload install ios
 
 dotnet build Sources/ThinCam/ThinCam.csproj \
@@ -1008,41 +995,31 @@ dotnet build Sources/ThinCam/ThinCam.csproj \
   -f net10.0-ios \
   -r iossimulator-arm64
 
-dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
-  -c Release -p:ThinCamTargetFrameworks=net10.0-ios \
-  -f net10.0-ios -r iossimulator-arm64
-
 dotnet build Samples/ThinCamDemo.iOS/ThinCamDemo.iOS.csproj \
   -c Release -p:ThinCamTargetFrameworks=net10.0-ios -r iossimulator-arm64
 ```
 
-### Android job
+### Package (macOS — requires all native artifacts + Xcode)
 
 ```bash
-sdkmanager "ndk;27.3.13750724" "cmake;3.22.1"
-export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
-./Build/build-macos.sh
-dotnet workload install android
+# Merge all native artifacts into Build/Native/runtimes/ then pack.
+# Versioning is MinVer-driven from git tags (prefix v).
+dotnet workload install android ios
 
-dotnet build Sources/ThinCam/ThinCam.csproj \
-  -c Release \
-  -p:ThinCamTargetFrameworks=net10.0-android \
-  -f net10.0-android
-
-dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
-  -c Release -p:ThinCamTargetFrameworks=net10.0-android -f net10.0-android
-
-dotnet build Samples/ThinCamDemo.Android/ThinCamDemo.Android.csproj \
-  -c Release -p:ThinCamTargetFrameworks=net10.0-android
+dotnet pack Sources/ThinCam/ThinCam.csproj -c Release -o Build/Native/artifacts/packages
+dotnet pack Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj -c Release -o Build/Native/artifacts/packages
+dotnet pack Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj -c Release -o Build/Native/artifacts/packages
 ```
+
+On `v*` tag pushes, CI also creates a GitHub Release with the `.nupkg` files attached.
 
 ## 12. Clean builds
 
 Remove generated native and managed outputs:
 
 ```bash
-rm -rf artifacts
-find src samples -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} +
+rm -rf Build/Native/artifacts
+find Sources Samples -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} +
 ```
 
 Do not delete staged runtime libraries unless you intend to rebuild them:
@@ -1057,7 +1034,7 @@ The repository currently contains a staged Linux x64 library. A fully clean sour
 
 ### `A compatible installed .NET SDK ... was not found`
 
-Install a .NET 10 SDK compatible with `global.json`, or update `global.json` intentionally as part of a toolchain upgrade.
+Install a .NET 10 SDK (10.0.300 or newer). The repository does not pin a specific SDK version.
 
 ### Android or iOS workload errors during a desktop build
 
@@ -1104,7 +1081,7 @@ Exact group and udev configuration is distribution-specific.
 
 ### Linux `FormatNotSupported`
 
-The current backend accepts YUYV or UYVY. Inspect formats with a V4L2 utility such as `v4l2-ctl --list-formats-ext`. An MJPEG-only camera is not supported in version 1.
+The current backend accepts YUYV or UYVY. Inspect formats with a V4L2 utility such as `v4l2-ctl --list-formats-ext`. An MJPEG-only camera is not supported.
 
 ### Windows camera is busy or access denied
 

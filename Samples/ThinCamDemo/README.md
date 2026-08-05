@@ -11,4 +11,4 @@ The UI uses the reusable `ThinCam.Avalonia.CameraPreview` control and a
 device enumeration, frame preview, snapshots, exposure, focus, zoom, Light,
 format negotiation, frame statistics, and diagnostic export.
 
-See [`../../Docs/AVALONIA.md`](../../Docs/AVALONIA.md) for build and usage details.
+See [`../../Docs/Avalonia.md`](../../Docs/Avalonia.md) for build and usage details.

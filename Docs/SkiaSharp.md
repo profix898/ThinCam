@@ -167,7 +167,7 @@ using SKBitmap? snapshot = previewBuffer.CopySnapshot();
 previewBuffer.Clear();
 ```
 
-For a reusable Avalonia control built on this buffer, see [AVALONIA.md](AVALONIA.md).
+For a reusable Avalonia control built on this buffer, see [Avalonia.md](Avalonia.md).
 
 ## Encoding
 

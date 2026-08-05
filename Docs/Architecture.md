@@ -2,7 +2,7 @@
 
 This document explains the design of ThinCam from the public C# API down to each operating system's native camera stack. It is intended for maintainers, contributors, reviewers, and application developers who need to understand how frames move through the library and where platform behavior differs.
 
-For exact build commands, toolchain prerequisites, native artifact staging, managed project builds, and NuGet packaging, see [BUILDING.md](BUILDING.md). For public API usage, see [API.md](API.md), and for the capability-driven Exposure, Focus, Zoom, and Light surface, see [CONTROLS.md](CONTROLS.md). Optional presentation layers are documented in [SKIASHARP.md](SKIASHARP.md) and [AVALONIA.md](AVALONIA.md). The binary interface shared by C# and the native libraries is summarized in [ABI.md](ABI.md).
+For exact build commands, toolchain prerequisites, native artifact staging, managed project builds, and NuGet packaging, see [Building.md](Building.md). For public API usage, see [Api.md](Api.md), and for the capability-driven Exposure, Focus, Zoom, and Light surface, see [Controls.md](Controls.md). Optional presentation layers are documented in [SkiaSharp.md](SkiaSharp.md) and [Avalonia.md](Avalonia.md). The binary interface shared by C# and the native libraries is summarized in [Abi.md](Abi.md).
 
 ## Contents
 
@@ -24,7 +24,7 @@ For exact build commands, toolchain prerequisites, native artifact staging, mana
 - [Packaging model](#16-packaging-model)
 - [Build architecture](#17-build-architecture)
 - [CI design](#18-ci-design)
-- [Version 1 constraints](#19-version-1-constraints)
+- [Version 2 constraints](#19-version-2-constraints)
 - [Extension strategy](#20-extension-strategy)
 - [Testing strategy](#21-testing-strategy)
 - [Security and robustness](#22-security-and-robustness-considerations)
@@ -89,7 +89,7 @@ A C ABI was chosen because it is:
 
 ### 2.4 Predictable output format
 
-Version 1 always presents frames as top-to-bottom BGRA32.
+Version 2 always presents frames as top-to-bottom BGRA32.
 
 Each pixel occupies four bytes:
 
@@ -137,10 +137,11 @@ ThinCam/
 ├── Tests/ThinCamTests.SkiaSharp/  Conversion, transform, encoding, and buffer tests
 ├── Tests/ThinCamTests.Avalonia/   Preview-source ownership and transform tests
 ├── Build/                          Native build, demo, staging, and pack scripts
-├── Docs/                           Technical documentation and review record
-├── .github/workflows/ci.yml        Cross-platform compilation workflow
-├── Directory.Build.props           Shared managed build quality settings
-├── global.json                     Required .NET SDK family
+├── Docs/                           Technical documentation
+├── .github/workflows/build.yml     Cross-platform CI: native builds, tests, and packaging
+├── Directory.Build.props           Shared build quality settings and MinVer versioning
+├── Directory.Packages.props        Central package version management
+├── NuGet.config                    Single NuGet source for hermetic restore
 └── ThinCam.slnx                    Managed libraries, tests, and samples
 ```
 
@@ -218,7 +219,7 @@ The library does not expose backend-specific handles or native types.
 
 ### 5.2 Camera lifecycle
 
-`Camera.OpenAsync` performs both native open and start. There is no separate public `StartAsync` in version 1.
+`Camera.OpenAsync` performs both native open and start. There is no separate public `StartAsync`.
 
 The sequence inside `Camera.OpenAsync` is:
 
@@ -322,7 +323,7 @@ Only one call to `GetFramesAsync` is allowed per `Camera`. The one-reader rule m
 
 `Camera.ActiveFormat` is initially `null`. It is populated from the first valid frame because several platforms may select dimensions different from the requested values.
 
-Version 1 records:
+Version 2 records:
 
 - Actual width.
 - Actual height.
@@ -357,7 +358,7 @@ The shared interface is declared in `Native/include/thincam.h`.
 
 ### 6.1 Exported functions
 
-Every backend exposes the same nine symbols:
+Every backend exposes the same twelve symbols:
 
 ```c
 uint32_t tc_get_abi_version(void);
@@ -682,7 +683,7 @@ Apple buffers may contain row padding, so `VideoFrame.Stride` can be greater tha
 
 Front-facing cameras are marked mirrored in metadata. Pixel bytes are not physically mirrored.
 
-Version 1 reports zero rotation because this low-level backend has no UI/display orientation context. Applications should apply their own display transform.
+Version 2 reports zero rotation because this low-level backend has no UI/display orientation context. Applications should apply their own display transform.
 
 ### 10.6 Startup and shutdown
 
@@ -951,20 +952,21 @@ optionally run sample/application
 pack NuGet only after all intended assets are staged
 ```
 
-See [BUILDING.md](BUILDING.md) for exact commands.
+See [Building.md](Building.md) for exact commands.
 
 ## 18. CI design
 
-`.github/workflows/ci.yml` contains platform jobs that exercise the same project boundaries used by consumers:
+`.github/workflows/build.yml` contains the following jobs:
 
-- Linux builds the V4L2 library, runs native conversion tests, builds `ThinCam`, `ThinCam.SkiaSharp`, `ThinCam.Avalonia`, the console sample, and the Avalonia desktop head, then runs the SkiaSharp and Avalonia managed tests.
-- Windows builds the Media Foundation DLL plus all desktop managed libraries and the Avalonia desktop head.
-- macOS builds the macOS and iOS native artifacts, builds the desktop libraries/demo, installs the iOS workload, and compiles the iOS libraries and demo head for the simulator.
-- Android installs a fixed NDK, builds the native Android libraries, installs the Android workload, and compiles the Android libraries and demo head.
+- **test** (Ubuntu) — runs the MSTest managed test suites for `ThinCamTests.SkiaSharp` and `ThinCamTests.Avalonia`.
+- **native-windows** (Windows) — builds the Windows x64 and ARM64 Media Foundation DLLs. Android is skipped (`-SkipAndroid`) to avoid duplicate artifacts.
+- **native-linux** (Ubuntu) — builds the V4L2 library, runs native pixel-conversion tests, and builds the Android NDK libraries (arm64-v8a and x86_64). This is the only job that produces Android native artifacts.
+- **native-apple** (macOS) — builds the macOS (arm64/x86_64) and iOS (device/simulator) native libraries. Android is skipped (`--skip-android`).
+- **package** (macOS) — downloads all native artifacts, merges them into `Build/Native/runtimes/`, and packs the three NuGet packages. Runs on macOS because packing the `net10.0-ios` target framework requires Xcode. On `v*` tag pushes, creates a GitHub Release with the `.nupkg` files attached.
 
 CI validates compilation, package wiring, ABI shape, and conversion logic. It cannot replace physical-device testing. Permission dialogs, camera disconnects, vendor-driver quirks, suspend/resume, Light behavior, and real-time performance require hardware coverage.
 
-## 19. Version 1 constraints
+## 19. Version 2 constraints
 
 The capture core deliberately remains narrow even though optional adapters and controls now exist:
 

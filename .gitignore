@@ -3,8 +3,7 @@
 .idea/
 **/bin/
 **/obj/
-artifacts/*
-!artifacts/.gitkeep
+Build/Native/artifacts/
 Build/Native/runtimes/
 *.user
 *.suo

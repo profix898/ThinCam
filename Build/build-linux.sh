@@ -3,8 +3,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STAGE_ROOT="$ROOT/Build/Native/runtimes"
+ARTIFACTS="$ROOT/Build/Native/artifacts"
 RID="${RID:-linux-x64}"
-BUILD_DIR="$ROOT/artifacts/$RID"
+BUILD_DIR="$ARTIFACTS/$RID"
 STAGE_DIR="$STAGE_ROOT/$RID/native"
 SKIP_PACK=false
 SKIP_ANDROID=false
@@ -26,9 +27,9 @@ build_linux() {
   strip --strip-unneeded "$STAGE_DIR/libthincam.so" 2>/dev/null || true
 
   echo "=== Running pixel conversion tests ==="
-  cmake -S "$ROOT/Native/linux/tests" -B "$ROOT/artifacts/linux-tests" -G Ninja -DCMAKE_BUILD_TYPE=Release
-  cmake --build "$ROOT/artifacts/linux-tests"
-  "$ROOT/artifacts/linux-tests/pixel_convert_tests"
+  cmake -S "$ROOT/Native/linux/tests" -B "$ARTIFACTS/linux-tests" -G Ninja -DCMAKE_BUILD_TYPE=Release
+  cmake --build "$ARTIFACTS/linux-tests"
+  "$ARTIFACTS/linux-tests/pixel_convert_tests"
 
   echo "Staged $STAGE_DIR/libthincam.so"
 }
@@ -72,14 +73,14 @@ build_android() {
   fi
   local toolchain="$ndk/build/cmake/android.toolchain.cmake"
   local strip_bin
-  strip_bin="$(find "$ndk/toolchains/llvm/prebuilt" -name llvm-strip -type f 2>/dev/null | head -1)"
+  strip_bin="$(find "$ndk/toolchains/llvm/prebuilt" -name llvm-strip \( -type f -o -type l \) 2>/dev/null | head -1)"
   echo "Using NDK at $ndk"
 
   local abis=("arm64-v8a android-arm64" "x86_64 android-x64")
   for pair in "${abis[@]}"; do
     local abi="${pair%% *}"
     local rid="${pair##* }"
-    local build="$ROOT/artifacts/$rid"
+    local build="$ARTIFACTS/$rid"
     echo "=== Building Android $abi ==="
     cmake -S "$ROOT/Native/android" -B "$build" -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
@@ -99,7 +100,7 @@ build_android() {
 
 pack() {
   echo "=== Packaging NuGet packages ==="
-  local pack_args=(-c Release -o "$ROOT/artifacts/packages")
+  local pack_args=(-c Release -o "$ROOT/Build/Native/artifacts/packages")
   if [[ -n "${VERSION:-}" ]]; then
     pack_args+=("-p:PackageVersion=$VERSION")
   fi

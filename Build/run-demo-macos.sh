@@ -13,11 +13,11 @@ case "$(uname -m)" in
   *) echo "Unsupported macOS architecture: $(uname -m)" >&2; exit 1 ;;
 esac
 
-PUBLISH="$ROOT/artifacts/demo-macos/publish"
-APP="$ROOT/artifacts/demo-macos/ThinCam Demo.app"
+PUBLISH="$ROOT/Build/Native/artifacts/demo-macos/publish"
+APP="$ROOT/Build/Native/artifacts/demo-macos/ThinCam Demo.app"
 CONTENTS="$APP/Contents"
 
-rm -rf "$ROOT/artifacts/demo-macos"
+rm -rf "$ROOT/Build/Native/artifacts/demo-macos"
 mkdir -p "$PUBLISH" "$CONTENTS/MacOS" "$CONTENTS/Resources"
 
 dotnet publish "$ROOT/Samples/ThinCamDemo.Desktop/ThinCamDemo.Desktop.csproj"   -c Release   -r "$RID"   --self-contained false   -o "$PUBLISH"

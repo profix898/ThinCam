@@ -34,9 +34,11 @@ param(
 $ErrorActionPreference = "Stop"
 $Root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $StageRoot = Join-Path $Root "Build/Native/runtimes"
+$Artifacts = Join-Path $Root "Build/Native/artifacts"
 
-# NDK revision installed on request. Matches the revision used by CI.
-$PinnedNdkVersion = "27.3.13750724"   # r27c
+# NDK revision installed on request. Matches the LTS used by CI (r27d).
+# Local builds use auto-discovery and will prefer the newest installed NDK.
+$PinnedNdkVersion = "27.3.13750724"   # r27d (2024 LTS)
 
 function Invoke-Checked {
     param(
@@ -219,7 +221,7 @@ function Resolve-AndroidNdk {
 
 function Build-WindowsNative {
     param([string]$Rid, [string]$Arch)
-    $BuildDir = Join-Path $Root "artifacts/$Rid"
+    $BuildDir = Join-Path $Artifacts "$Rid"
     $StageDir = Join-Path $StageRoot "$Rid/native"
     Write-Host "=== Building $Rid ===" -ForegroundColor Cyan
     Invoke-Checked cmake @("-S", (Join-Path $Root "Native/windows"), "-B", $BuildDir, "-A", $Arch)
@@ -260,7 +262,7 @@ function Build-AndroidNative {
         @{ Abi = "x86_64";    Rid = "android-x64" }
     )
     foreach ($entry in $abis) {
-        $buildDir = Join-Path $Root "artifacts/$($entry.Rid)"
+        $buildDir = Join-Path $Artifacts "$($entry.Rid)"
         $stageDir = Join-Path $StageRoot "$($entry.Rid)/native"
         Write-Host "=== Building Android $($entry.Abi) ===" -ForegroundColor Cyan
         Invoke-Checked cmake @(
@@ -319,7 +321,7 @@ function Build-LinuxNative {
 
 function Pack-Packages {
     Write-Host "=== Packaging NuGet packages ===" -ForegroundColor Cyan
-    $PackArgs = @("-c", "Release", "-o", (Join-Path $Root "artifacts/packages"))
+    $PackArgs = @("-c", "Release", "-o", (Join-Path $Artifacts "packages"))
     if ($env:TARGET_FRAMEWORKS) { $PackArgs += "-p:ThinCamTargetFrameworks=$env:TARGET_FRAMEWORKS" }
     $projects = @(
         "Sources/ThinCam/ThinCam.csproj",

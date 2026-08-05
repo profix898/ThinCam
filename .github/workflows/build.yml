@@ -54,7 +54,7 @@ jobs:
         uses: nttld/setup-ndk@v1
         id: ndk
         with:
-          ndk-version: r27c
+          ndk-version: r27d
       - name: Build Linux and Android native libraries
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
@@ -108,20 +108,20 @@ jobs:
         run: find Build/Native/runtimes -type f
       - name: Pack NuGet packages
         run: |
-          dotnet pack Sources/ThinCam/ThinCam.csproj -c Release -o artifacts/packages
-          dotnet pack Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj -c Release -o artifacts/packages
-          dotnet pack Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj -c Release -o artifacts/packages
+          dotnet pack Sources/ThinCam/ThinCam.csproj -c Release -o Build/Native/artifacts/packages
+          dotnet pack Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj -c Release -o Build/Native/artifacts/packages
+          dotnet pack Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj -c Release -o Build/Native/artifacts/packages
       - name: List packages
-        run: ls -la artifacts/packages/
+        run: ls -la Build/Native/artifacts/packages/
       - name: Upload NuGet packages
         uses: actions/upload-artifact@v4
         with:
           name: nuget-packages
-          path: artifacts/packages/*.nupkg
+          path: Build/Native/artifacts/packages/*.nupkg
           if-no-files-found: error
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/packages/*.nupkg
+          files: Build/Native/artifacts/packages/*.nupkg
           generate_release_notes: true

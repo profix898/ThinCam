@@ -524,7 +524,7 @@ Install the .NET SDK, Xcode command-line tools, CMake, and Ninja, then run:
 ```
 
 The script selects `osx-arm64` or `osx-x64` from the host architecture, publishes
-the desktop head, creates `artifacts/demo-macos/ThinCam Demo.app`, applies an ad-hoc
+the desktop head, creates `Build/Native/artifacts/demo-macos/ThinCam Demo.app`, applies an ad-hoc
 signature, and opens the bundle.
 
 ### 10.4 Android
@@ -613,7 +613,7 @@ VERSION=0.1.0 ./Build/build-macos.sh
 ```
 
 This produces `ThinCam`, `ThinCam.SkiaSharp`, and `ThinCam.Avalonia` packages in
-`artifacts/packages`.
+`Build/Native/artifacts/packages`.
 
 ## 11. Tests
 

@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STAGE_ROOT="$ROOT/Build/Native/runtimes"
+ARTIFACTS="$ROOT/Build/Native/artifacts"
 SKIP_PACK=false
 SKIP_ANDROID=false
 
@@ -17,7 +18,7 @@ done
 build_macos() {
   local arch="$1"
   local rid="osx-$arch"
-  local build="$ROOT/artifacts/$rid"
+  local build="$ARTIFACTS/$rid"
   echo "=== Building macOS $arch ==="
   cmake -S "$ROOT/Native/apple" -B "$build" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
@@ -33,7 +34,7 @@ build_ios() {
   local sdk="$1"
   local arch="$2"
   local rid="$3"
-  local build="$ROOT/artifacts/$rid"
+  local build="$ARTIFACTS/$rid"
   echo "=== Building iOS $rid ==="
   cmake -S "$ROOT/Native/apple" -B "$build" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
@@ -84,14 +85,14 @@ build_android() {
   fi
   local toolchain="$ndk/build/cmake/android.toolchain.cmake"
   local strip_bin
-  strip_bin="$(find "$ndk/toolchains/llvm/prebuilt" -name llvm-strip -type f 2>/dev/null | head -1)"
+  strip_bin="$(find "$ndk/toolchains/llvm/prebuilt" -name llvm-strip \( -type f -o -type l \) 2>/dev/null | head -1)"
   echo "Using NDK at $ndk"
 
   local abis=("arm64-v8a android-arm64" "x86_64 android-x64")
   for pair in "${abis[@]}"; do
     local abi="${pair%% *}"
     local rid="${pair##* }"
-    local build="$ROOT/artifacts/$rid"
+    local build="$ARTIFACTS/$rid"
     echo "=== Building Android $abi ==="
     cmake -S "$ROOT/Native/android" -B "$build" -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
@@ -111,7 +112,7 @@ build_android() {
 
 pack() {
   echo "=== Packaging NuGet packages ==="
-  local pack_args=(-c Release -o "$ROOT/artifacts/packages")
+  local pack_args=(-c Release -o "$ROOT/Build/Native/artifacts/packages")
   if [[ -n "${VERSION:-}" ]]; then
     pack_args+=("-p:PackageVersion=$VERSION")
   fi

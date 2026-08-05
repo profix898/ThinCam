@@ -156,14 +156,14 @@ Staged .../Build/Native/runtimes/linux-x64/native/libthincam.so
 ```bash
 cmake \
   -S Native/linux \
-  -B artifacts/linux-x64 \
+  -B Build/Native/artifacts/linux-x64 \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release
 
-cmake --build artifacts/linux-x64
+cmake --build Build/Native/artifacts/linux-x64
 
 mkdir -p Build/Native/runtimes/linux-x64/native
-cp artifacts/linux-x64/libthincam.so \
+cp Build/Native/artifacts/linux-x64/libthincam.so \
    Build/Native/runtimes/linux-x64/native/libthincam.so
 ```
 
@@ -172,12 +172,12 @@ Build and run native conversion tests manually:
 ```bash
 cmake \
   -S Native/linux/tests \
-  -B artifacts/linux-tests \
+  -B Build/Native/artifacts/linux-tests \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release
 
-cmake --build artifacts/linux-tests
-./artifacts/linux-tests/pixel_convert_tests
+cmake --build Build/Native/artifacts/linux-tests
+./Build/Native/artifacts/linux-tests/pixel_convert_tests
 ```
 
 ### 4.4 Linux ARM64
@@ -258,16 +258,16 @@ For x64:
 ```powershell
 cmake `
   -S Native/windows `
-  -B artifacts/win-x64 `
+  -B Build/Native/artifacts/win-x64 `
   -A x64
 
-cmake --build artifacts/win-x64 --config Release
+cmake --build Build/Native/artifacts/win-x64 --config Release
 
 New-Item -ItemType Directory -Force `
   Build/Native/runtimes/win-x64/native | Out-Null
 
 Copy-Item `
-  artifacts/win-x64/Release/thincam.dll `
+  Build/Native/artifacts/win-x64/Release/thincam.dll `
   Build/Native/runtimes/win-x64/native/thincam.dll `
   -Force
 ```
@@ -338,15 +338,15 @@ Apple Silicon:
 ```bash
 cmake \
   -S Native/apple \
-  -B artifacts/osx-arm64 \
+  -B Build/Native/artifacts/osx-arm64 \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_OSX_ARCHITECTURES=arm64 \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
 
-cmake --build artifacts/osx-arm64
+cmake --build Build/Native/artifacts/osx-arm64
 mkdir -p Build/Native/runtimes/osx-arm64/native
-cp artifacts/osx-arm64/libthincam.dylib \
+cp Build/Native/artifacts/osx-arm64/libthincam.dylib \
    Build/Native/runtimes/osx-arm64/native/libthincam.dylib
 ```
 
@@ -355,15 +355,15 @@ Intel:
 ```bash
 cmake \
   -S Native/apple \
-  -B artifacts/osx-x64 \
+  -B Build/Native/artifacts/osx-x64 \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_OSX_ARCHITECTURES=x86_64 \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
 
-cmake --build artifacts/osx-x64
+cmake --build Build/Native/artifacts/osx-x64
 mkdir -p Build/Native/runtimes/osx-x64/native
-cp artifacts/osx-x64/libthincam.dylib \
+cp Build/Native/artifacts/osx-x64/libthincam.dylib \
    Build/Native/runtimes/osx-x64/native/libthincam.dylib
 ```
 
@@ -372,7 +372,7 @@ cp artifacts/osx-x64/libthincam.dylib \
 ```bash
 cmake \
   -S Native/apple \
-  -B artifacts/ios-arm64 \
+  -B Build/Native/artifacts/ios-arm64 \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_SYSTEM_NAME=iOS \
@@ -380,9 +380,9 @@ cmake \
   -DCMAKE_OSX_ARCHITECTURES=arm64 \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
 
-cmake --build artifacts/ios-arm64
+cmake --build Build/Native/artifacts/ios-arm64
 mkdir -p Build/Native/runtimes/ios-arm64/native
-cp artifacts/ios-arm64/libthincam.a \
+cp Build/Native/artifacts/ios-arm64/libthincam.a \
    Build/Native/runtimes/ios-arm64/native/libthincam.a
 ```
 
@@ -393,7 +393,7 @@ Apple Silicon simulator:
 ```bash
 cmake \
   -S Native/apple \
-  -B artifacts/iossimulator-arm64 \
+  -B Build/Native/artifacts/iossimulator-arm64 \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_SYSTEM_NAME=iOS \
@@ -401,7 +401,7 @@ cmake \
   -DCMAKE_OSX_ARCHITECTURES=arm64 \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
 
-cmake --build artifacts/iossimulator-arm64
+cmake --build Build/Native/artifacts/iossimulator-arm64
 ```
 
 Intel simulator:
@@ -409,7 +409,7 @@ Intel simulator:
 ```bash
 cmake \
   -S Native/apple \
-  -B artifacts/iossimulator-x64 \
+  -B Build/Native/artifacts/iossimulator-x64 \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_SYSTEM_NAME=iOS \
@@ -417,7 +417,7 @@ cmake \
   -DCMAKE_OSX_ARCHITECTURES=x86_64 \
   -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
 
-cmake --build artifacts/iossimulator-x64
+cmake --build Build/Native/artifacts/iossimulator-x64
 ```
 
 Copy each `libthincam.a` into the matching runtime directory.
@@ -499,7 +499,7 @@ The script builds API 24 with static libc++ for:
 ```bash
 cmake \
   -S Native/android \
-  -B artifacts/android-arm64 \
+  -B Build/Native/artifacts/android-arm64 \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
@@ -507,9 +507,9 @@ cmake \
   -DANDROID_PLATFORM=android-24 \
   -DANDROID_STL=c++_static
 
-cmake --build artifacts/android-arm64
+cmake --build Build/Native/artifacts/android-arm64
 mkdir -p Build/Native/runtimes/android-arm64/native
-cp artifacts/android-arm64/libthincam.so \
+cp Build/Native/artifacts/android-arm64/libthincam.so \
    Build/Native/runtimes/android-arm64/native/libthincam.so
 ```
 
@@ -518,7 +518,7 @@ cp artifacts/android-arm64/libthincam.so \
 ```bash
 cmake \
   -S Native/android \
-  -B artifacts/android-x64 \
+  -B Build/Native/artifacts/android-x64 \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
@@ -526,9 +526,9 @@ cmake \
   -DANDROID_PLATFORM=android-24 \
   -DANDROID_STL=c++_static
 
-cmake --build artifacts/android-x64
+cmake --build Build/Native/artifacts/android-x64
 mkdir -p Build/Native/runtimes/android-x64/native
-cp artifacts/android-x64/libthincam.so \
+cp Build/Native/artifacts/android-x64/libthincam.so \
    Build/Native/runtimes/android-x64/native/libthincam.so
 ```
 
@@ -886,9 +886,9 @@ VERSION=0.1.0 ./Build/build-macos.sh
 Output:
 
 ```text
-artifacts/packages/ThinCam.0.1.0.nupkg
-artifacts/packages/ThinCam.SkiaSharp.0.1.0.nupkg
-artifacts/packages/ThinCam.Avalonia.0.1.0.nupkg
+Build/Native/artifacts/packages/ThinCam.0.1.0.nupkg
+Build/Native/artifacts/packages/ThinCam.SkiaSharp.0.1.0.nupkg
+Build/Native/artifacts/packages/ThinCam.Avalonia.0.1.0.nupkg
 ```
 
 Default version when `VERSION` is omitted:
@@ -901,13 +901,13 @@ Default version when `VERSION` is omitted:
 
 ```bash
 dotnet pack Sources/ThinCam/ThinCam.csproj \
-  -c Release -p:PackageVersion=0.1.0 -o artifacts/packages
+  -c Release -p:PackageVersion=0.1.0 -o Build/Native/artifacts/packages
 
 dotnet pack Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj \
-  -c Release -p:PackageVersion=0.1.0 -o artifacts/packages
+  -c Release -p:PackageVersion=0.1.0 -o Build/Native/artifacts/packages
 
 dotnet pack Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
-  -c Release -p:PackageVersion=0.1.0 -o artifacts/packages
+  -c Release -p:PackageVersion=0.1.0 -o Build/Native/artifacts/packages
 ```
 
 Packing the multi-target project requires the Android and iOS workloads because all target frameworks are evaluated. For a complete cross-platform package, perform the final pack on macOS with both workloads installed and with all native artifacts staged.
@@ -917,7 +917,7 @@ Packing the multi-target project requires the Android and iOS workloads because 
 A `.nupkg` is a ZIP file:
 
 ```bash
-unzip -l artifacts/packages/ThinCam.0.1.0.nupkg
+unzip -l Build/Native/artifacts/packages/ThinCam.0.1.0.nupkg
 ```
 
 Check for:
@@ -935,7 +935,7 @@ Create a temporary NuGet source:
 
 ```bash
 mkdir -p artifacts/local-feed
-cp artifacts/packages/ThinCam.0.1.0.nupkg artifacts/local-feed/
+cp Build/Native/artifacts/packages/ThinCam.0.1.0.nupkg artifacts/local-feed/
 ```
 
 In a test application:

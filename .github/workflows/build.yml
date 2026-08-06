@@ -21,8 +21,8 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Run managed tests
         run: |
-          dotnet test Tests/ThinCamTests.SkiaSharp/ThinCamTests.SkiaSharp.csproj -c Release
-          dotnet test Tests/ThinCamTests.Avalonia/ThinCamTests.Avalonia.csproj -c Release
+          dotnet test Tests/ThinCamTests.SkiaSharp/ThinCamTests.SkiaSharp.csproj -c Release -p:ThinCamTargetFrameworks=net8.0
+          dotnet test Tests/ThinCamTests.Avalonia/ThinCamTests.Avalonia.csproj -c Release -p:ThinCamTargetFrameworks=net8.0
 
   native-windows:
     runs-on: windows-latest

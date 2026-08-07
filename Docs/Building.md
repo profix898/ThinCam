@@ -41,10 +41,10 @@ ThinCam is not built as one universal binary. Each native backend must be built 
 The project targets .NET 10. Install the SDK from <https://dotnet.microsoft.com/download/dotnet/10.0>.
 The repository does not pin a specific SDK version via `global.json`; any .NET 10 SDK
 (10.0.300 or newer) is sufficient. The `Directory.Build.props` file sets the target
-frameworks (`net8.0;net10.0-android;net10.0-ios`) and the `Directory.Packages.props`
+frameworks (`net10.0;net10.0-android;net10.0-ios`) and the `Directory.Packages.props`
 file manages NuGet package versions centrally. A repo-local `NuGet.config` pins a single
 package source (nuget.org) so restore is hermetic regardless of machine-level sources.
-Install a .NET 10 SDK compatible with this policy. The SDK builds both the `net8.0` desktop target and the .NET 10 mobile targets.
+Install a .NET 10 SDK compatible with this policy. The SDK builds the .NET 10 desktop and mobile targets.
 
 Check the selected SDK:
 
@@ -549,20 +549,20 @@ Then:
 
 The managed project is multi-targeted. On machines without Android/iOS workloads, override `TargetFrameworks` so MSBuild evaluates only the desktop target.
 
-### 8.1 Restore and build desktop `net8.0`
+### 8.1 Restore and build desktop `net10.0`
 
 Use this on Windows, Linux, or macOS:
 
 ```bash
 dotnet restore \
   Sources/ThinCam/ThinCam.csproj \
-  -p:ThinCamTargetFrameworks=net8.0
+  -p:ThinCamTargetFrameworks=net10.0
 
 dotnet build \
   Sources/ThinCam/ThinCam.csproj \
   -c Release \
-  -p:ThinCamTargetFrameworks=net8.0 \
-  -f net8.0
+  -p:ThinCamTargetFrameworks=net10.0 \
+  -f net10.0
 ```
 
 The `TargetFrameworks` override is important. Without it, the project may try to evaluate mobile targets and require unavailable workloads.
@@ -574,7 +574,7 @@ The solution contains the capture library, optional SkiaSharp/Avalonia adapters,
 ```bash
 dotnet build ThinCam.slnx \
   -c Release \
-  -p:ThinCamTargetFrameworks=net8.0
+  -p:ThinCamTargetFrameworks=net10.0
 ```
 
 If solution-level property propagation behaves differently in a particular IDE, build the two `.csproj` files explicitly.
@@ -621,7 +621,7 @@ DYLD_LIBRARY_PATH="$PWD/Build/Native/runtimes/osx-arm64/native${DYLD_LIBRARY_PAT
 
 Use `osx-x64` on Intel macOS. The explicit loader path is needed for a direct source `ProjectReference`; NuGet runtime asset selection applies when the library is consumed from a packed package.
 
-The sample opens the default camera, prints frame metadata for ten seconds, and disposes every frame. It is `net8.0` and intended for desktop platforms, not Android or iOS.
+The sample opens the default camera, prints frame metadata for ten seconds, and disposes every frame. It is `net10.0` and intended for desktop platforms, not Android or iOS.
 
 ### 8.4 Build the Android managed target
 
@@ -700,14 +700,14 @@ A consuming iOS app must include `NSCameraUsageDescription` and valid signing/pr
 
 ### 8.6 Build the macOS managed library
 
-macOS desktop uses the ordinary `net8.0` target:
+macOS desktop uses the ordinary `net10.0` target:
 
 ```bash
 dotnet build \
   Sources/ThinCam/ThinCam.csproj \
   -c Release \
-  -p:ThinCamTargetFrameworks=net8.0 \
-  -f net8.0
+  -p:ThinCamTargetFrameworks=net10.0 \
+  -f net10.0
 ```
 
 At application publish time, choose `osx-arm64` or `osx-x64` so the matching dylib runtime asset is selected.
@@ -720,8 +720,8 @@ The reusable preview package and demo are separate projects. Build the reusable 
 dotnet build \
   Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
   -c Release \
-  -p:ThinCamTargetFrameworks=net8.0 \
-  -f net8.0
+  -p:ThinCamTargetFrameworks=net10.0 \
+  -f net10.0
 ```
 
 #### Linux desktop
@@ -854,7 +854,7 @@ dotnet publish \
   -r linux-x64 \
   --self-contained false
 
-publish_dir="Samples/ThinCamDemo.Console/bin/Release/net8.0/linux-x64/publish"
+publish_dir="Samples/ThinCamDemo.Console/bin/Release/net10.0/linux-x64/publish"
 cp Build/Native/runtimes/linux-x64/native/libthincam.so "$publish_dir/"
 ```
 
@@ -910,6 +910,8 @@ dotnet pack Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
 
 Packing the multi-target project requires the Android and iOS workloads because all target frameworks are evaluated. For a complete cross-platform package, perform the final pack on macOS with both workloads installed and with all native artifacts staged.
 
+NuGet expands the platform target frameworks to the SDK API levels used for compilation, such as `net10.0-android36.0` and `net10.0-ios26.0`. These remain .NET 10 assemblies; the separate folders are required for Android permission APIs and iOS static-link metadata. `SupportedOSPlatformVersion` controls the lower deployment requirement independently.
+
 ### 10.4 Inspect package contents
 
 A `.nupkg` is a ZIP file:
@@ -920,7 +922,7 @@ unzip -l Build/Native/artifacts/packages/ThinCam.0.1.0.nupkg
 
 Check for:
 
-- `lib/net8.0/ThinCam.dll`
+- `lib/net10.0/ThinCam.dll`
 - `lib/net10.0-android*/ThinCam.dll`
 - `lib/net10.0-ios*/ThinCam.dll`
 - `runtimes/<rid>/native/...`
@@ -1011,7 +1013,7 @@ dotnet pack Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj -c Release -o Bui
 dotnet pack Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj -c Release -o Build/Native/artifacts/packages
 ```
 
-On `v*` tag pushes, CI also creates a GitHub Release with the `.nupkg` files attached.
+On `v*` tag pushes, CI also creates a GitHub Release with the `.nupkg` and `.snupkg` files attached.
 
 ## 12. Clean builds
 
@@ -1042,8 +1044,8 @@ Override the multi-target list:
 
 ```bash
 dotnet build Sources/ThinCam/ThinCam.csproj \
-  -p:ThinCamTargetFrameworks=net8.0 \
-  -f net8.0
+  -p:ThinCamTargetFrameworks=net10.0 \
+  -f net10.0
 ```
 
 ### `DllNotFoundException: thincam`
@@ -1122,7 +1124,7 @@ Before publishing a cross-platform package:
 - [ ] Build iOS device and both simulator static libraries.
 - [ ] Build Android arm64 and x64 native libraries.
 - [ ] Verify all nine ABI exports in each native output.
-- [ ] Build `net8.0` managed target with warnings as errors.
+- [ ] Build `net10.0` managed target with warnings as errors.
 - [ ] Build `net10.0-android` managed target.
 - [ ] Build `net10.0-ios` for at least one simulator RID and `ios-arm64`.
 - [ ] Run the desktop sample on each desktop OS with real hardware.

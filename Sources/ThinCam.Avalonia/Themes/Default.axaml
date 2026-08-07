@@ -1,0 +1,258 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:tc="using:ThinCam.Avalonia"
+        x:Class="ThinCam.Avalonia.ThinCamTheme">
+    <Styles.Resources>
+        <ResourceDictionary>
+
+            <!--
+                Theme-variant resources. These are defined by the library itself so the controls
+                render correctly without depending on a particular application theme. Override any
+                of these keys in your own resources to restyle without replacing the templates.
+            -->
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="CameraPreviewBackgroundBrush" Color="#E4E7EC" />
+                    <SolidColorBrush x:Key="CameraPreviewForegroundBrush" Color="#5A606B" />
+                    <SolidColorBrush x:Key="CameraPreviewBorderBrush" Color="#CDD2DA" />
+                    <SolidColorBrush x:Key="CameraControlsSectionBackgroundBrush" Color="#FBFCFD" />
+                    <SolidColorBrush x:Key="CameraControlsSectionBorderBrush" Color="#D8DCE3" />
+                    <SolidColorBrush x:Key="CameraControlsForegroundBrush" Color="#1B1D21" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="CameraPreviewBackgroundBrush" Color="#101216" />
+                    <SolidColorBrush x:Key="CameraPreviewForegroundBrush" Color="#B4B8C0" />
+                    <SolidColorBrush x:Key="CameraPreviewBorderBrush" Color="#2A2E36" />
+                    <SolidColorBrush x:Key="CameraControlsSectionBackgroundBrush" Color="#1F2228" />
+                    <SolidColorBrush x:Key="CameraControlsSectionBorderBrush" Color="#31363F" />
+                    <SolidColorBrush x:Key="CameraControlsForegroundBrush" Color="#E6E8EC" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <!-- ================= CameraPreview ================= -->
+            <ControlTheme x:Key="{x:Type tc:CameraPreview}" TargetType="tc:CameraPreview">
+                <Setter Property="Background" Value="{DynamicResource CameraPreviewBackgroundBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource CameraPreviewForegroundBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource CameraPreviewBorderBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="MinHeight" Value="120" />
+                <Setter Property="ClipToBounds" Value="True" />
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}"
+                                Padding="{TemplateBinding Padding}"
+                                ClipToBounds="True">
+                            <Panel>
+                                <tc:CameraPreviewSurface x:Name="PART_Surface"
+                                                         Source="{TemplateBinding Source}"
+                                                         Stretch="{TemplateBinding Stretch}"
+                                                         StretchDirection="{TemplateBinding StretchDirection}" />
+                                <ContentPresenter x:Name="PART_Placeholder"
+                                                  Content="{TemplateBinding PlaceholderContent}"
+                                                  ContentTemplate="{TemplateBinding PlaceholderTemplate}"
+                                                  IsVisible="{TemplateBinding IsPlaceholderVisible}"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  FontSize="{TemplateBinding FontSize}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                            </Panel>
+                        </Border>
+                    </ControlTemplate>
+                </Setter>
+            </ControlTheme>
+
+            <!-- ================= CameraControls ================= -->
+            <ControlTheme x:Key="{x:Type tc:CameraControlsView}" TargetType="tc:CameraControlsView">
+                <Setter Property="Foreground" Value="{DynamicResource CameraControlsForegroundBrush}" />
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <ScrollViewer Background="{TemplateBinding Background}"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <Panel>
+                                <TextBlock x:Name="PART_EmptyPlaceholder"
+                                           Text="Open a camera to view controls."
+                                           Opacity="0.5"
+                                           Margin="0,40,0,0"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding !HasCamera, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                                <StackPanel x:Name="PART_Sections"
+                                            Spacing="10"
+                                            Margin="4"
+                                            IsVisible="{TemplateBinding HasCamera}">
+
+                                    <!-- Exposure -->
+                                    <Border x:Name="PART_ExposureSection"
+                                            Classes="section"
+                                            IsVisible="{TemplateBinding HasExposureModes}">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Classes="section-title" Text="Exposure" />
+                                            <Grid ColumnDefinitions="Auto,*"
+                                                  RowDefinitions="Auto,Auto,Auto"
+                                                  ColumnSpacing="10"
+                                                  RowSpacing="8">
+                                                <TextBlock Classes="label" Text="Mode" />
+                                                <ComboBox Grid.Column="1"
+                                                          HorizontalAlignment="Stretch"
+                                                          ItemsSource="{TemplateBinding ExposureModes}"
+                                                          SelectedItem="{Binding SelectedExposureMode, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+
+                                                <TextBlock Grid.Row="1" Classes="label" Text="Compensation (EV)"
+                                                           IsVisible="{TemplateBinding HasExposureCompensation}" />
+                                                <Grid Grid.Row="1" Grid.Column="1"
+                                                      ColumnDefinitions="*,Auto"
+                                                      ColumnSpacing="8"
+                                                      IsVisible="{TemplateBinding HasExposureCompensation}">
+                                                    <Slider Minimum="{TemplateBinding ExposureCompensationMinimum}"
+                                                            Maximum="{TemplateBinding ExposureCompensationMaximum}"
+                                                            TickFrequency="{TemplateBinding ExposureCompensationStep}"
+                                                            IsSnapToTickEnabled="False"
+                                                            Value="{Binding ExposureCompensation, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Column="1"
+                                                               MinWidth="50"
+                                                               VerticalAlignment="Center"
+                                                               Text="{Binding ExposureCompensation, RelativeSource={RelativeSource TemplatedParent}, StringFormat={}{0:0.###}}" />
+                                                </Grid>
+
+                                                <TextBlock Grid.Row="2" Classes="label" Text="Duration (ms)"
+                                                           IsVisible="{TemplateBinding IsExposureManual}" />
+                                                <StackPanel Grid.Row="2" Grid.Column="1"
+                                                            Orientation="Horizontal"
+                                                            Spacing="8"
+                                                            IsVisible="{TemplateBinding IsExposureManual}">
+                                                    <!--
+                                                        Minimum/Maximum are deliberately not bound
+                                                        here: NumericUpDown clamps silently, which
+                                                        would hide out-of-range input instead of
+                                                        reporting it. CameraControlsView validates
+                                                        against the camera range and reports through
+                                                        INotifyDataErrorInfo, which renders the
+                                                        standard error adorner.
+                                                    -->
+                                                    <NumericUpDown Width="200"
+                                                                   Increment="{TemplateBinding ManualExposureStep}"
+                                                                   FormatString="0.###"
+                                                                   IsEnabled="{TemplateBinding HasManualExposure}"
+                                                                   Value="{Binding ManualExposureMilliseconds, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, Converter={x:Static tc:NullToZeroConverter.Instance}}" />
+                                                    <TextBlock Classes="label" VerticalAlignment="Center" Text="ISO" />
+                                                    <NumericUpDown Width="200"
+                                                                   Increment="{TemplateBinding IsoStep}"
+                                                                   FormatString="0"
+                                                                   IsEnabled="{TemplateBinding HasIso}"
+                                                                   Value="{Binding ManualIso, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, Converter={x:Static tc:NullToZeroConverter.Instance}}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Focus -->
+                                    <Border x:Name="PART_FocusSection"
+                                            Classes="section"
+                                            IsVisible="{TemplateBinding HasFocusModes}">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Classes="section-title" Text="Focus" />
+                                            <Grid ColumnDefinitions="Auto,*"
+                                                  RowDefinitions="Auto,Auto"
+                                                  ColumnSpacing="10"
+                                                  RowSpacing="8">
+                                                <TextBlock Classes="label" Text="Mode" />
+                                                <ComboBox Grid.Column="1"
+                                                          HorizontalAlignment="Stretch"
+                                                          ItemsSource="{TemplateBinding FocusModes}"
+                                                          SelectedItem="{Binding SelectedFocusMode, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+
+                                                <TextBlock Grid.Row="1" Classes="label" Text="Position"
+                                                           IsVisible="{TemplateBinding IsFocusManual}" />
+                                                <Grid Grid.Row="1" Grid.Column="1"
+                                                      ColumnDefinitions="*,Auto"
+                                                      ColumnSpacing="8"
+                                                      IsVisible="{TemplateBinding IsFocusManual}">
+                                                    <Slider Minimum="{TemplateBinding FocusPositionMinimum}"
+                                                            Maximum="{TemplateBinding FocusPositionMaximum}"
+                                                            TickFrequency="{TemplateBinding FocusPositionStep}"
+                                                            IsEnabled="{TemplateBinding HasManualFocus}"
+                                                            Value="{Binding FocusPosition, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                                                    <TextBlock Grid.Column="1"
+                                                               MinWidth="50"
+                                                               VerticalAlignment="Center"
+                                                               Text="{Binding FocusPosition, RelativeSource={RelativeSource TemplatedParent}, StringFormat={}{0:0.###}}" />
+                                                </Grid>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Zoom -->
+                                    <Border x:Name="PART_ZoomSection"
+                                            Classes="section"
+                                            IsVisible="{TemplateBinding HasZoom}">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Classes="section-title" Text="Zoom" />
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                                <Slider Minimum="{TemplateBinding ZoomMinimum}"
+                                                        Maximum="{TemplateBinding ZoomMaximum}"
+                                                        TickFrequency="{TemplateBinding ZoomStep}"
+                                                        Value="{Binding ZoomFactor, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                                                <TextBlock Grid.Column="1"
+                                                           MinWidth="50"
+                                                           VerticalAlignment="Center"
+                                                           Text="{Binding ZoomFactor, RelativeSource={RelativeSource TemplatedParent}, StringFormat={}{0:0.###}×}" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Light -->
+                                    <Border x:Name="PART_LightSection"
+                                            Classes="section"
+                                            IsVisible="{TemplateBinding HasLight}">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Classes="section-title" Text="Light" />
+                                            <CheckBox Content="Enabled"
+                                                      IsChecked="{Binding LightEnabled, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                                            <Grid ColumnDefinitions="*,Auto"
+                                                  ColumnSpacing="8"
+                                                  IsVisible="{TemplateBinding HasVariableLight}">
+                                                <Slider Minimum="{TemplateBinding LightLevelMinimum}"
+                                                        Maximum="{TemplateBinding LightLevelMaximum}"
+                                                        TickFrequency="{TemplateBinding LightLevelStep}"
+                                                        Value="{Binding LightLevel, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" />
+                                                <TextBlock Grid.Column="1"
+                                                           MinWidth="50"
+                                                           VerticalAlignment="Center"
+                                                           Text="{Binding LightLevel, RelativeSource={RelativeSource TemplatedParent}, StringFormat={}{0:0.###}}" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Panel>
+                        </ScrollViewer>
+                    </ControlTemplate>
+                </Setter>
+
+                <!-- Cosmetics for the default template parts. -->
+                <Style Selector="^ /template/ Border.section">
+                    <Setter Property="Background" Value="{DynamicResource CameraControlsSectionBackgroundBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource CameraControlsSectionBorderBrush}" />
+                    <Setter Property="BorderThickness" Value="1" />
+                    <Setter Property="CornerRadius" Value="8" />
+                    <Setter Property="Padding" Value="12" />
+                </Style>
+                <Style Selector="^ /template/ TextBlock.section-title">
+                    <Setter Property="FontSize" Value="16" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                    <Setter Property="Margin" Value="0,0,0,8" />
+                </Style>
+                <Style Selector="^ /template/ TextBlock.label">
+                    <Setter Property="Opacity" Value="0.7" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                </Style>
+            </ControlTheme>
+
+        </ResourceDictionary>
+    </Styles.Resources>
+</Styles>

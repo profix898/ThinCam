@@ -6,19 +6,14 @@ namespace ThinCam;
 public sealed record CameraOpenOptions
 {
     /// <summary>
-    /// Gets the requested frame width in pixels.
+    /// Gets the requested frame rate in frames per second.
     /// </summary>
-    public int Width { get; init; } = 640;
+    public int FramesPerSecond { get; init; } = 30;
 
     /// <summary>
     /// Gets the requested frame height in pixels.
     /// </summary>
     public int Height { get; init; } = 480;
-
-    /// <summary>
-    /// Gets the requested frame rate in frames per second.
-    /// </summary>
-    public int FramesPerSecond { get; init; } = 30;
 
     /// <summary>
     /// Gets the requested pixel format.
@@ -29,6 +24,11 @@ public sealed record CameraOpenOptions
     /// Number of managed frames retained while the consumer is behind. Old frames are disposed first.
     /// </summary>
     public int QueueCapacity { get; init; } = 2;
+
+    /// <summary>
+    /// Gets the requested frame width in pixels.
+    /// </summary>
+    public int Width { get; init; } = 640;
 
     internal void Validate()
     {

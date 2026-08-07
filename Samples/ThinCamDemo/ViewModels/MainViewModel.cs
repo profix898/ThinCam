@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Avalonia.Threading;
 using SkiaSharp;
@@ -17,8 +18,10 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     private readonly IPlatformServices _platformServices;
     private readonly SemaphoreSlim _lifecycleGate = new(1, 1);
     private readonly DispatcherTimer _statsTimer;
+
     private readonly List<string> _logLines = [];
-    private Camera? _camera;
+    private readonly object _disposeSync = new();
+    private Task? _disposeTask;
     private CancellationTokenSource? _captureCancellation;
     private Task? _captureTask;
     private CameraDeviceItem? _selectedDevice;
@@ -26,7 +29,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     private CameraPermissionStatus _permissionStatus;
     private string _statusText = "Ready";
     private string _activeFormatText = "No active format";
-    private string _lastError = "None";
+    private string _lastError = String.Empty;
     private string _diagnosticText = String.Empty;
     private decimal _requestedWidth = 1280;
     private decimal _requestedHeight = 720;
@@ -70,6 +73,8 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
     private long _lastFrameTimestamp;
     private int _disposed;
 
+    private Func<SaveFileRequest, CancellationToken, Task<bool>>? _saveFileHandler;
+
     /// <summary>Initializes a new main view model.</summary>
     /// <param name="platformServices">The host-platform services.</param>
     public MainViewModel(IPlatformServices platformServices)
@@ -77,147 +82,34 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         _platformServices = platformServices ?? throw new ArgumentNullException(nameof(platformServices));
         PreviewSource = new CameraPreviewSource();
 
-        RequestPermissionCommand = new AsyncCommand(RequestPermissionAsync);
-        RefreshDevicesCommand = new AsyncCommand(RefreshDevicesAsync);
-        OpenCameraCommand = new AsyncCommand(OpenCameraAsync, () => SelectedDevice is not null && !IsCameraOpen);
-        CloseCameraCommand = new AsyncCommand(CloseCameraAsync, () => IsCameraOpen);
-        RestartCameraCommand = new AsyncCommand(RestartCameraAsync, () => SelectedDevice is not null);
-        RefreshCapabilitiesCommand = new AsyncCommand(RefreshCapabilitiesAsync, () => IsCameraOpen);
-        RefreshControlStateCommand = new AsyncCommand(RefreshControlStateAsync, () => IsCameraOpen);
-        ApplyExposureModeCommand = new AsyncCommand(ApplyExposureModeAsync, () => IsCameraOpen && HasExposureModes);
-        ApplyExposureCompensationCommand = new AsyncCommand(ApplyExposureCompensationAsync, () => IsCameraOpen && HasExposureCompensation);
-        ApplyManualExposureCommand = new AsyncCommand(ApplyManualExposureAsync, () => IsCameraOpen && HasManualExposure);
-        ApplyFocusModeCommand = new AsyncCommand(ApplyFocusModeAsync, () => IsCameraOpen && HasFocusModes);
-        ApplyFocusPositionCommand = new AsyncCommand(ApplyFocusPositionAsync, () => IsCameraOpen && HasManualFocus);
-        ApplyZoomCommand = new AsyncCommand(ApplyZoomAsync, () => IsCameraOpen && HasZoom);
-        ApplyLightCommand = new AsyncCommand(ApplyLightAsync, () => IsCameraOpen && HasLight);
-        SaveSnapshotCommand = new AsyncCommand(SaveSnapshotAsync, () => PreviewSource.HasFrame && SaveFileHandler is not null);
-        ExportDiagnosticsCommand = new AsyncCommand(ExportDiagnosticsAsync, () => SaveFileHandler is not null);
+        RequestPermissionCommand = CreateCommand(RequestPermissionAsync);
+        RefreshDevicesCommand = CreateCommand(RefreshDevicesAsync);
+        OpenCameraCommand = CreateCommand(OpenCameraAsync, () => SelectedDevice is not null && !IsCameraOpen);
+        CloseCameraCommand = CreateCommand(CloseCameraAsync, () => IsCameraOpen);
+        RestartCameraCommand = CreateCommand(RestartCameraAsync, () => SelectedDevice is not null);
+        RefreshCapabilitiesCommand = CreateCommand(RefreshCapabilitiesAsync, () => IsCameraOpen);
+        RefreshControlStateCommand = CreateCommand(RefreshControlStateAsync, () => IsCameraOpen);
+        ApplyExposureModeCommand = CreateCommand(ApplyExposureModeAsync, () => IsCameraOpen && HasExposureModes);
+        ApplyExposureCompensationCommand = CreateCommand(ApplyExposureCompensationAsync, () => IsCameraOpen && HasExposureCompensation);
+        ApplyManualExposureCommand = CreateCommand(ApplyManualExposureAsync, () => IsCameraOpen && HasManualExposure);
+        ApplyFocusModeCommand = CreateCommand(ApplyFocusModeAsync, () => IsCameraOpen && HasFocusModes);
+        ApplyFocusPositionCommand = CreateCommand(ApplyFocusPositionAsync, () => IsCameraOpen && HasManualFocus);
+        ApplyZoomCommand = CreateCommand(ApplyZoomAsync, () => IsCameraOpen && HasZoom);
+        ApplyLightCommand = CreateCommand(ApplyLightAsync, () => IsCameraOpen && HasLight);
+        SaveSnapshotCommand = CreateCommand(SaveSnapshotAsync, () => PreviewSource.HasFrame && SaveFileHandler is not null);
+        ExportDiagnosticsCommand = CreateCommand(ExportDiagnosticsAsync, () => SaveFileHandler is not null);
         ClearLogCommand = new RelayCommand(ClearLog);
 
         _permissionStatus = SafeGetPermissionStatus();
         _lastStatsTimestamp = Stopwatch.GetTimestamp();
         _statsTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Background, OnStatsTick);
-        _statsTimer.Start();
 
         Log($"ThinCam Avalonia demo started on {_platformServices.PlatformDescription}.");
         Log($"Initial permission status: {_permissionStatus}.");
     }
 
-    private Func<SaveFileRequest, CancellationToken, Task<bool>>? _saveFileHandler;
-
-    /// <summary>Gets or sets the platform-specific file-save handler.</summary>
-    public Func<SaveFileRequest, CancellationToken, Task<bool>>? SaveFileHandler
-    {
-        get => _saveFileHandler;
-        set
-        {
-            _saveFileHandler = value;
-            SaveSnapshotCommand.RaiseCanExecuteChanged();
-            ExportDiagnosticsCommand.RaiseCanExecuteChanged();
-        }
-    }
-
-    /// <summary>Gets the available camera devices.</summary>
-    public ObservableCollection<CameraDeviceItem> Devices { get; } = [];
-
-    /// <summary>Gets the supported exposure modes.</summary>
-    public ObservableCollection<ExposureMode> ExposureModes { get; } = [];
-
-    /// <summary>Gets the supported focus modes.</summary>
-    public ObservableCollection<FocusMode> FocusModes { get; } = [];
-
-    /// <summary>Gets the source that supplies camera preview frames.</summary>
-    public CameraPreviewSource PreviewSource { get; }
-
-    /// <summary>Gets the command that requests camera permission.</summary>
-    public AsyncCommand RequestPermissionCommand { get; }
-
-    /// <summary>Gets the command that refreshes the camera device list.</summary>
-    public AsyncCommand RefreshDevicesCommand { get; }
-
-    /// <summary>Gets the command that opens the selected camera.</summary>
-    public AsyncCommand OpenCameraCommand { get; }
-
-    /// <summary>Gets the command that closes the active camera.</summary>
-    public AsyncCommand CloseCameraCommand { get; }
-
-    /// <summary>Gets the command that restarts the selected camera.</summary>
-    public AsyncCommand RestartCameraCommand { get; }
-
-    /// <summary>Gets the command that refreshes camera capabilities.</summary>
-    public AsyncCommand RefreshCapabilitiesCommand { get; }
-
-    /// <summary>Gets the command that refreshes camera control state.</summary>
-    public AsyncCommand RefreshControlStateCommand { get; }
-
-    /// <summary>Gets the command that applies the selected exposure mode.</summary>
-    public AsyncCommand ApplyExposureModeCommand { get; }
-
-    /// <summary>Gets the command that applies exposure compensation.</summary>
-    public AsyncCommand ApplyExposureCompensationCommand { get; }
-
-    /// <summary>Gets the command that applies manual exposure settings.</summary>
-    public AsyncCommand ApplyManualExposureCommand { get; }
-
-    /// <summary>Gets the command that applies the selected focus mode.</summary>
-    public AsyncCommand ApplyFocusModeCommand { get; }
-
-    /// <summary>Gets the command that applies the manual focus position.</summary>
-    public AsyncCommand ApplyFocusPositionCommand { get; }
-
-    /// <summary>Gets the command that applies the zoom factor.</summary>
-    public AsyncCommand ApplyZoomCommand { get; }
-
-    /// <summary>Gets the command that applies light settings.</summary>
-    public AsyncCommand ApplyLightCommand { get; }
-
-    /// <summary>Gets the command that saves the current preview frame.</summary>
-    public AsyncCommand SaveSnapshotCommand { get; }
-
-    /// <summary>Gets the command that exports diagnostic information.</summary>
-    public AsyncCommand ExportDiagnosticsCommand { get; }
-
-    /// <summary>Gets the command that clears the diagnostic log.</summary>
-    public RelayCommand ClearLogCommand { get; }
-
-    /// <summary>Gets a description of the current platform.</summary>
-    public string PlatformDescription => _platformServices.PlatformDescription;
-
-    /// <summary>Gets whether a camera is currently open.</summary>
-    public bool IsCameraOpen => _camera is not null;
-
-    /// <summary>Gets the camera permission status as text.</summary>
-    public string PermissionStatusText => PermissionStatus.ToString();
-
-    /// <summary>Gets the current camera permission status.</summary>
-    public CameraPermissionStatus PermissionStatus
-    {
-        get => _permissionStatus;
-        private set
-        {
-            if (SetProperty(ref _permissionStatus, value))
-                OnPropertyChanged(nameof(PermissionStatusText));
-        }
-    }
-
-    /// <summary>Gets or sets the selected camera device.</summary>
-    public CameraDeviceItem? SelectedDevice
-    {
-        get => _selectedDevice;
-        set
-        {
-            if (SetProperty(ref _selectedDevice, value))
-                NotifyCommandStates();
-        }
-    }
-
-    /// <summary>Gets the current operation status.</summary>
-    public string StatusText
-    {
-        get => _statusText;
-        private set => SetProperty(ref _statusText, value);
-    }
+    /// <summary>Gets the currently open camera, or null when none is open.</summary>
+    public Camera? ActiveCamera { get; private set; }
 
     /// <summary>Gets a description of the active frame format.</summary>
     public string ActiveFormatText
@@ -226,12 +118,43 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         private set => SetProperty(ref _activeFormatText, value);
     }
 
-    /// <summary>Gets the most recent error description.</summary>
-    public string LastError
-    {
-        get => _lastError;
-        private set => SetProperty(ref _lastError, value);
-    }
+    /// <summary>Gets the command that applies exposure compensation.</summary>
+    public AsyncCommand ApplyExposureCompensationCommand { get; }
+
+    /// <summary>Gets the command that applies the selected exposure mode.</summary>
+    public AsyncCommand ApplyExposureModeCommand { get; }
+
+    /// <summary>Gets the command that applies the selected focus mode.</summary>
+    public AsyncCommand ApplyFocusModeCommand { get; }
+
+    /// <summary>Gets the command that applies the manual focus position.</summary>
+    public AsyncCommand ApplyFocusPositionCommand { get; }
+
+    /// <summary>Gets the command that applies light settings.</summary>
+    public AsyncCommand ApplyLightCommand { get; }
+
+    /// <summary>Gets the command that applies manual exposure settings.</summary>
+    public AsyncCommand ApplyManualExposureCommand { get; }
+
+    /// <summary>Gets the command that applies the zoom factor.</summary>
+    public AsyncCommand ApplyZoomCommand { get; }
+
+    private IReadOnlyList<AsyncCommand> AsyncCommands
+        =>
+        [
+            RequestPermissionCommand, RefreshDevicesCommand, OpenCameraCommand, CloseCameraCommand, RestartCameraCommand, RefreshCapabilitiesCommand,
+            RefreshControlStateCommand, ApplyExposureModeCommand, ApplyExposureCompensationCommand, ApplyManualExposureCommand, ApplyFocusModeCommand,
+            ApplyFocusPositionCommand, ApplyZoomCommand, ApplyLightCommand, SaveSnapshotCommand, ExportDiagnosticsCommand
+        ];
+
+    /// <summary>Gets the command that clears the diagnostic log.</summary>
+    public RelayCommand ClearLogCommand { get; }
+
+    /// <summary>Gets the command that closes the active camera.</summary>
+    public AsyncCommand CloseCameraCommand { get; }
+
+    /// <summary>Gets the available camera devices.</summary>
+    public ObservableCollection<CameraDeviceItem> Devices { get; } = [];
 
     /// <summary>Gets the accumulated diagnostic log.</summary>
     public string DiagnosticText
@@ -240,60 +163,14 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         private set => SetProperty(ref _diagnosticText, value);
     }
 
-    /// <summary>Gets or sets the requested frame width.</summary>
-    public decimal RequestedWidth
-    {
-        get => _requestedWidth;
-        set => SetProperty(ref _requestedWidth, value);
-    }
-
-    /// <summary>Gets or sets the requested frame height.</summary>
-    public decimal RequestedHeight
-    {
-        get => _requestedHeight;
-        set => SetProperty(ref _requestedHeight, value);
-    }
-
-    /// <summary>Gets or sets the requested frame rate.</summary>
-    public decimal RequestedFramesPerSecond
-    {
-        get => _requestedFramesPerSecond;
-        set => SetProperty(ref _requestedFramesPerSecond, value);
-    }
-
-    /// <summary>Gets or sets the requested frame queue capacity.</summary>
-    public decimal QueueCapacity
-    {
-        get => _queueCapacity;
-        set => SetProperty(ref _queueCapacity, value);
-    }
-
-    /// <summary>Gets or sets the selected exposure mode.</summary>
-    public ExposureMode? SelectedExposureMode
-    {
-        get => _selectedExposureMode;
-        set => SetProperty(ref _selectedExposureMode, value);
-    }
-
-    /// <summary>Gets or sets the selected focus mode.</summary>
-    public FocusMode? SelectedFocusMode
-    {
-        get => _selectedFocusMode;
-        set => SetProperty(ref _selectedFocusMode, value);
-    }
+    /// <summary>Gets the command that exports diagnostic information.</summary>
+    public AsyncCommand ExportDiagnosticsCommand { get; }
 
     /// <summary>Gets or sets the requested exposure compensation in EV.</summary>
     public double ExposureCompensation
     {
         get => _exposureCompensation;
         set => SetProperty(ref _exposureCompensation, value);
-    }
-
-    /// <summary>Gets the minimum exposure compensation in EV.</summary>
-    public double ExposureCompensationMinimum
-    {
-        get => _exposureCompensationMinimum;
-        private set => SetProperty(ref _exposureCompensationMinimum, value);
     }
 
     /// <summary>Gets the maximum exposure compensation in EV.</summary>
@@ -303,6 +180,13 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         private set => SetProperty(ref _exposureCompensationMaximum, value);
     }
 
+    /// <summary>Gets the minimum exposure compensation in EV.</summary>
+    public double ExposureCompensationMinimum
+    {
+        get => _exposureCompensationMinimum;
+        private set => SetProperty(ref _exposureCompensationMinimum, value);
+    }
+
     /// <summary>Gets the exposure compensation increment in EV.</summary>
     public double ExposureCompensationStep
     {
@@ -310,19 +194,11 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         private set => SetProperty(ref _exposureCompensationStep, value);
     }
 
-    /// <summary>Gets or sets the requested manual exposure duration in milliseconds.</summary>
-    public decimal ManualExposureMilliseconds
-    {
-        get => _manualExposureMilliseconds;
-        set => SetProperty(ref _manualExposureMilliseconds, value);
-    }
+    /// <summary>Gets the supported exposure modes.</summary>
+    public ObservableCollection<ExposureMode> ExposureModes { get; } = [];
 
-    /// <summary>Gets or sets the requested manual ISO value.</summary>
-    public decimal ManualIso
-    {
-        get => _manualIso;
-        set => SetProperty(ref _manualIso, value);
-    }
+    /// <summary>Gets the supported focus modes.</summary>
+    public ObservableCollection<FocusMode> FocusModes { get; } = [];
 
     /// <summary>Gets or sets the requested manual focus position.</summary>
     public double FocusPosition
@@ -331,32 +207,91 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         set => SetProperty(ref _focusPosition, value);
     }
 
-    /// <summary>Gets or sets the requested zoom factor.</summary>
-    public double ZoomFactor
+    /// <summary>Gets whether an error message is available.</summary>
+    public bool HasError => !String.IsNullOrEmpty(LastError);
+
+    /// <summary>Gets whether exposure compensation is available.</summary>
+    public bool HasExposureCompensation
     {
-        get => _zoomFactor;
-        set => SetProperty(ref _zoomFactor, value);
+        get => _hasExposureCompensation;
+        private set => SetCapability(ref _hasExposureCompensation, value);
     }
 
-    /// <summary>Gets the minimum supported zoom factor.</summary>
-    public double ZoomMinimum
+    /// <summary>Gets whether exposure modes are available.</summary>
+    public bool HasExposureModes
     {
-        get => _zoomMinimum;
-        private set => SetProperty(ref _zoomMinimum, value);
+        get => _hasExposureModes;
+        private set => SetCapability(ref _hasExposureModes, value);
     }
 
-    /// <summary>Gets the maximum supported zoom factor.</summary>
-    public double ZoomMaximum
+    /// <summary>Gets whether focus modes are available.</summary>
+    public bool HasFocusModes
     {
-        get => _zoomMaximum;
-        private set => SetProperty(ref _zoomMaximum, value);
+        get => _hasFocusModes;
+        private set => SetCapability(ref _hasFocusModes, value);
     }
 
-    /// <summary>Gets the supported zoom increment.</summary>
-    public double ZoomStep
+    /// <summary>Gets whether manual ISO control is available.</summary>
+    public bool HasIso
     {
-        get => _zoomStep;
-        private set => SetProperty(ref _zoomStep, value);
+        get => _hasIso;
+        private set => SetProperty(ref _hasIso, value);
+    }
+
+    /// <summary>Gets whether a controllable camera light is available.</summary>
+    public bool HasLight
+    {
+        get => _hasLight;
+        private set => SetCapability(ref _hasLight, value);
+    }
+
+    /// <summary>Gets whether manual exposure duration is available.</summary>
+    public bool HasManualExposure
+    {
+        get => _hasManualExposure;
+        private set => SetCapability(ref _hasManualExposure, value);
+    }
+
+    /// <summary>Gets whether manual focus control is available.</summary>
+    public bool HasManualFocus
+    {
+        get => _hasManualFocus;
+        private set => SetCapability(ref _hasManualFocus, value);
+    }
+
+    /// <summary>Gets whether variable camera light levels are available.</summary>
+    public bool HasVariableLight
+    {
+        get => _hasVariableLight;
+        private set => SetProperty(ref _hasVariableLight, value);
+    }
+
+    /// <summary>Gets whether zoom control is available.</summary>
+    public bool HasZoom
+    {
+        get => _hasZoom;
+        private set => SetCapability(ref _hasZoom, value);
+    }
+
+    /// <summary>Gets whether a camera is currently open.</summary>
+    public bool IsCameraOpen => ActiveCamera is not null;
+
+    /// <summary>Gets the most recent error description.</summary>
+    public string LastError
+    {
+        get => _lastError;
+        private set
+        {
+            if (SetProperty(ref _lastError, value))
+                OnPropertyChanged(nameof(HasError));
+        }
+    }
+
+    /// <summary>Gets the age of the most recently received frame.</summary>
+    public string LastFrameAge
+    {
+        get => _lastFrameAge;
+        private set => SetProperty(ref _lastFrameAge, value);
     }
 
     /// <summary>Gets or sets whether the camera light should be enabled.</summary>
@@ -373,67 +308,55 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         set => SetProperty(ref _lightLevel, value);
     }
 
-    /// <summary>Gets whether exposure modes are available.</summary>
-    public bool HasExposureModes
+    /// <summary>Gets or sets the requested manual exposure duration in milliseconds.</summary>
+    public decimal ManualExposureMilliseconds
     {
-        get => _hasExposureModes;
-        private set => SetCapability(ref _hasExposureModes, value);
+        get => _manualExposureMilliseconds;
+        set => SetProperty(ref _manualExposureMilliseconds, value);
     }
 
-    /// <summary>Gets whether exposure compensation is available.</summary>
-    public bool HasExposureCompensation
+    /// <summary>Gets or sets the requested manual ISO value.</summary>
+    public decimal ManualIso
     {
-        get => _hasExposureCompensation;
-        private set => SetCapability(ref _hasExposureCompensation, value);
+        get => _manualIso;
+        set => SetProperty(ref _manualIso, value);
     }
 
-    /// <summary>Gets whether manual exposure duration is available.</summary>
-    public bool HasManualExposure
+    /// <summary>Gets the command that opens the selected camera.</summary>
+    public AsyncCommand OpenCameraCommand { get; }
+
+    /// <summary>Gets the current camera permission status.</summary>
+    public CameraPermissionStatus PermissionStatus
     {
-        get => _hasManualExposure;
-        private set => SetCapability(ref _hasManualExposure, value);
+        get => _permissionStatus;
+        private set
+        {
+            if (SetProperty(ref _permissionStatus, value))
+                OnPropertyChanged(nameof(PermissionStatusText));
+        }
     }
 
-    /// <summary>Gets whether manual ISO control is available.</summary>
-    public bool HasIso
+    /// <summary>Gets the camera permission status as text.</summary>
+    public string PermissionStatusText => PermissionStatus.ToString();
+
+    /// <summary>Gets a description of the current platform.</summary>
+    public string PlatformDescription => _platformServices.PlatformDescription;
+
+    /// <summary>Gets the estimated number of preview frames not rendered.</summary>
+    public long PreviewFramesSkipped
     {
-        get => _hasIso;
-        private set => SetProperty(ref _hasIso, value);
+        get => _previewFramesSkipped;
+        private set => SetProperty(ref _previewFramesSkipped, value);
     }
 
-    /// <summary>Gets whether focus modes are available.</summary>
-    public bool HasFocusModes
-    {
-        get => _hasFocusModes;
-        private set => SetCapability(ref _hasFocusModes, value);
-    }
+    /// <summary>Gets the source that supplies camera preview frames.</summary>
+    public CameraPreviewSource PreviewSource { get; }
 
-    /// <summary>Gets whether manual focus control is available.</summary>
-    public bool HasManualFocus
+    /// <summary>Gets or sets the requested frame queue capacity.</summary>
+    public decimal QueueCapacity
     {
-        get => _hasManualFocus;
-        private set => SetCapability(ref _hasManualFocus, value);
-    }
-
-    /// <summary>Gets whether zoom control is available.</summary>
-    public bool HasZoom
-    {
-        get => _hasZoom;
-        private set => SetCapability(ref _hasZoom, value);
-    }
-
-    /// <summary>Gets whether a controllable camera light is available.</summary>
-    public bool HasLight
-    {
-        get => _hasLight;
-        private set => SetCapability(ref _hasLight, value);
-    }
-
-    /// <summary>Gets whether variable camera light levels are available.</summary>
-    public bool HasVariableLight
-    {
-        get => _hasVariableLight;
-        private set => SetProperty(ref _hasVariableLight, value);
+        get => _queueCapacity;
+        set => SetProperty(ref _queueCapacity, value);
     }
 
     /// <summary>Gets the measured incoming frame rate.</summary>
@@ -443,11 +366,107 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         private set => SetProperty(ref _receivedFramesPerSecond, value);
     }
 
+    /// <summary>Gets the command that refreshes camera capabilities.</summary>
+    public AsyncCommand RefreshCapabilitiesCommand { get; }
+
+    /// <summary>Gets the command that refreshes camera control state.</summary>
+    public AsyncCommand RefreshControlStateCommand { get; }
+
+    /// <summary>Gets the command that refreshes the camera device list.</summary>
+    public AsyncCommand RefreshDevicesCommand { get; }
+
+    /// <summary>Gets the total number of rendered frames.</summary>
+    public long RenderedFrames
+    {
+        get => _renderedFrames;
+        private set => SetProperty(ref _renderedFrames, value);
+    }
+
     /// <summary>Gets the measured rendered frame rate.</summary>
     public double RenderedFramesPerSecond
     {
         get => _renderedFramesPerSecond;
         private set => SetProperty(ref _renderedFramesPerSecond, value);
+    }
+
+    /// <summary>Gets the command that requests camera permission.</summary>
+    public AsyncCommand RequestPermissionCommand { get; }
+
+    /// <summary>Gets or sets the requested frame rate.</summary>
+    public decimal RequestedFramesPerSecond
+    {
+        get => _requestedFramesPerSecond;
+        set => SetProperty(ref _requestedFramesPerSecond, value);
+    }
+
+    /// <summary>Gets or sets the requested frame height.</summary>
+    public decimal RequestedHeight
+    {
+        get => _requestedHeight;
+        set => SetProperty(ref _requestedHeight, value);
+    }
+
+    /// <summary>Gets or sets the requested frame width.</summary>
+    public decimal RequestedWidth
+    {
+        get => _requestedWidth;
+        set => SetProperty(ref _requestedWidth, value);
+    }
+
+    /// <summary>Gets the command that restarts the selected camera.</summary>
+    public AsyncCommand RestartCameraCommand { get; }
+
+    /// <summary>Gets or sets the platform-specific file-save handler.</summary>
+    public Func<SaveFileRequest, CancellationToken, Task<bool>>? SaveFileHandler
+    {
+        get => _saveFileHandler;
+        set
+        {
+            _saveFileHandler = value;
+            SaveSnapshotCommand.RaiseCanExecuteChanged();
+            ExportDiagnosticsCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    /// <summary>Gets the command that saves the current preview frame.</summary>
+    public AsyncCommand SaveSnapshotCommand { get; }
+
+    /// <summary>Gets or sets the selected camera device.</summary>
+    public CameraDeviceItem? SelectedDevice
+    {
+        get => _selectedDevice;
+        set
+        {
+            if (SetProperty(ref _selectedDevice, value))
+            {
+                OnPropertyChanged(nameof(SelectedDeviceId));
+                NotifyCommandStates();
+            }
+        }
+    }
+
+    /// <summary>Gets the selected platform camera identifier.</summary>
+    public string SelectedDeviceId => SelectedDevice?.Device.Id ?? "None";
+
+    /// <summary>Gets or sets the selected exposure mode.</summary>
+    public ExposureMode? SelectedExposureMode
+    {
+        get => _selectedExposureMode;
+        set => SetProperty(ref _selectedExposureMode, value);
+    }
+
+    /// <summary>Gets or sets the selected focus mode.</summary>
+    public FocusMode? SelectedFocusMode
+    {
+        get => _selectedFocusMode;
+        set => SetProperty(ref _selectedFocusMode, value);
+    }
+
+    /// <summary>Gets the current operation status.</summary>
+    public string StatusText
+    {
+        get => _statusText;
+        private set => SetProperty(ref _statusText, value);
     }
 
     /// <summary>Gets the total number of received frames.</summary>
@@ -457,25 +476,81 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         private set => SetProperty(ref _totalFrames, value);
     }
 
-    /// <summary>Gets the total number of rendered frames.</summary>
-    public long RenderedFrames
+    /// <summary>Gets or sets the requested zoom factor.</summary>
+    public double ZoomFactor
     {
-        get => _renderedFrames;
-        private set => SetProperty(ref _renderedFrames, value);
+        get => _zoomFactor;
+        set => SetProperty(ref _zoomFactor, value);
     }
 
-    /// <summary>Gets the estimated number of preview frames not rendered.</summary>
-    public long PreviewFramesSkipped
+    /// <summary>Gets the maximum supported zoom factor.</summary>
+    public double ZoomMaximum
     {
-        get => _previewFramesSkipped;
-        private set => SetProperty(ref _previewFramesSkipped, value);
+        get => _zoomMaximum;
+        private set => SetProperty(ref _zoomMaximum, value);
     }
 
-    /// <summary>Gets the age of the most recently received frame.</summary>
-    public string LastFrameAge
+    /// <summary>Gets the minimum supported zoom factor.</summary>
+    public double ZoomMinimum
     {
-        get => _lastFrameAge;
-        private set => SetProperty(ref _lastFrameAge, value);
+        get => _zoomMinimum;
+        private set => SetProperty(ref _zoomMinimum, value);
+    }
+
+    /// <summary>Gets the supported zoom increment.</summary>
+    public double ZoomStep
+    {
+        get => _zoomStep;
+        private set => SetProperty(ref _zoomStep, value);
+    }
+
+    #region IAsyncDisposable
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync()
+    {
+        lock (_disposeSync)
+        {
+            return new ValueTask(_disposeTask ??= DisposeCoreAsync());
+        }
+    }
+
+    #endregion
+
+    /// <summary>Starts UI statistics updates while the view is active.</summary>
+    public void Activate()
+    {
+        ThrowIfDisposed();
+        _statsTimer.Start();
+    }
+
+    /// <summary>Stops capture and recurrent UI work when the app leaves the foreground.</summary>
+    /// <returns>A task that completes after the camera has stopped.</returns>
+    public async Task DeactivateAsync()
+    {
+        if (Volatile.Read(ref _disposed) != 0)
+            return;
+
+        _statsTimer.Stop();
+
+        // Cancel first so gate holders release quickly, then release the camera before draining
+        // commands that cannot be cancelled, such as an open platform file picker.
+        var commands = CancelCommandsAsync();
+        await StopCameraAsync().ConfigureAwait(true);
+        await commands.ConfigureAwait(true);
+    }
+
+    private async Task StopCameraAsync()
+    {
+        await _lifecycleGate.WaitAsync().ConfigureAwait(true);
+        try
+        {
+            await StopCameraCoreAsync().ConfigureAwait(true);
+        }
+        finally
+        {
+            _lifecycleGate.Release();
+        }
     }
 
     /// <summary>Records that the preview rendered a frame.</summary>
@@ -483,6 +558,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private async Task RequestPermissionAsync(CancellationToken cancellationToken)
     {
+        await _lifecycleGate.WaitAsync(cancellationToken).ConfigureAwait(true);
         try
         {
             StatusText = "Requesting camera permission…";
@@ -492,9 +568,17 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             StatusText = $"Permission: {PermissionStatus}";
             Log($"Permission request completed: {PermissionStatus}.");
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception exception)
         {
             HandleError("Permission request failed", exception);
+        }
+        finally
+        {
+            _lifecycleGate.Release();
         }
     }
 
@@ -520,6 +604,10 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             foreach (var item in Devices)
                 Log($"Device: {item.Device.Name}; id={item.Device.Id}; position={item.Device.Position}; default={item.Device.IsDefault}.");
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception exception)
         {
             HandleError("Camera enumeration failed", exception);
@@ -532,64 +620,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         await _lifecycleGate.WaitAsync(cancellationToken).ConfigureAwait(true);
         try
         {
-            ThrowIfDisposed();
-            if (_camera is not null)
-                return;
-
-            if (SelectedDevice is null)
-                throw new InvalidOperationException("Select a camera first.");
-
-            PermissionStatus = SafeGetPermissionStatus();
-            if (PermissionStatus != CameraPermissionStatus.Granted)
-            {
-                PermissionStatus = await _platformServices
-                                         .RequestCameraPermissionAsync(cancellationToken)
-                                         .ConfigureAwait(true);
-            }
-
-            if (PermissionStatus != CameraPermissionStatus.Granted)
-            {
-                throw new CameraException(CameraErrorCode.PermissionDenied,
-                                          $"Camera permission is {PermissionStatus}.");
-            }
-
-            var options = new CameraOpenOptions
-            {
-                Width = ToPositiveInt(RequestedWidth, nameof(RequestedWidth)), Height = ToPositiveInt(RequestedHeight, nameof(RequestedHeight)),
-                FramesPerSecond = ToPositiveInt(RequestedFramesPerSecond, nameof(RequestedFramesPerSecond)),
-                QueueCapacity = Math.Clamp(ToPositiveInt(QueueCapacity, nameof(QueueCapacity)), 1, 32)
-            };
-
-            StatusText = $"Opening {SelectedDevice.Device.Name}…";
-            LastError = "None";
-            ResetFrameStatistics();
-
-            var camera = await Camera.OpenAsync(SelectedDevice.Device,
-                                                options,
-                                                cancellationToken).ConfigureAwait(true);
-
-            _camera = camera;
-            _captureCancellation = new CancellationTokenSource();
-            _captureTask = CaptureLoopAsync(camera, _captureCancellation.Token);
-            OnPropertyChanged(nameof(IsCameraOpen));
-            NotifyCommandStates();
-
-            StatusText = $"Capturing from {camera.Device.Name}.";
-            Log($"Camera opened: {camera.Device.Name}; requested={options.Width}x{options.Height}@{options.FramesPerSecond}; queue={options.QueueCapacity}.");
-
-            await ReadCapabilitiesAsync(camera, cancellationToken).ConfigureAwait(true);
-        }
-        catch (Exception exception)
-        {
-            HandleError("Could not open camera", exception);
-            try
-            {
-                await StopCameraCoreAsync().ConfigureAwait(true);
-            }
-            catch (Exception cleanupException)
-            {
-                HandleError("Could not clean up the failed camera open", cleanupException);
-            }
+            await OpenCameraCoreAsync(cancellationToken).ConfigureAwait(true);
         }
         finally
         {
@@ -604,6 +635,10 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         {
             await StopCameraCoreAsync().ConfigureAwait(true);
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception exception)
         {
             HandleError("Could not close camera", exception);
@@ -616,12 +651,15 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private async Task RestartCameraAsync(CancellationToken cancellationToken)
     {
-        var stopped = false;
         await _lifecycleGate.WaitAsync(cancellationToken).ConfigureAwait(true);
         try
         {
             await StopCameraCoreAsync().ConfigureAwait(true);
-            stopped = true;
+            await OpenCameraCoreAsync(cancellationToken).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception exception)
         {
@@ -631,50 +669,122 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         {
             _lifecycleGate.Release();
         }
+    }
 
-        if (stopped)
-            await OpenCameraAsync(cancellationToken).ConfigureAwait(true);
+    private async Task OpenCameraCoreAsync(CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        if (ActiveCamera is not null)
+            return;
+        if (SelectedDevice is null)
+            throw new InvalidOperationException("Select a camera first.");
+
+        try
+        {
+            PermissionStatus = SafeGetPermissionStatus();
+            if (PermissionStatus != CameraPermissionStatus.Granted)
+            {
+                PermissionStatus = await _platformServices
+                                         .RequestCameraPermissionAsync(cancellationToken)
+                                         .ConfigureAwait(true);
+            }
+            if (PermissionStatus != CameraPermissionStatus.Granted)
+                throw new CameraException(CameraErrorCode.PermissionDenied, $"Camera permission is {PermissionStatus}.");
+
+            var options = new CameraOpenOptions
+            {
+                Width = ToPositiveInt(RequestedWidth, nameof(RequestedWidth)), Height = ToPositiveInt(RequestedHeight, nameof(RequestedHeight)),
+                FramesPerSecond = ToPositiveInt(RequestedFramesPerSecond, nameof(RequestedFramesPerSecond)),
+                QueueCapacity = Math.Clamp(ToPositiveInt(QueueCapacity, nameof(QueueCapacity)), 1, 32)
+            };
+
+            StatusText = $"Opening {SelectedDevice.Device.Name}…";
+            LastError = String.Empty;
+            ResetFrameStatistics();
+            var camera = await Camera.OpenAsync(SelectedDevice.Device, options, cancellationToken).ConfigureAwait(true);
+            ActiveCamera = camera;
+            _captureCancellation = new CancellationTokenSource();
+            _captureTask = CaptureLoopAsync(camera, _captureCancellation.Token);
+            OnPropertyChanged(nameof(IsCameraOpen));
+            OnPropertyChanged(nameof(ActiveCamera));
+            NotifyCommandStates();
+            StatusText = $"Capturing from {camera.Device.Name}.";
+            Log($"Camera opened: {camera.Device.Name}; requested={options.Width}x{options.Height}@{options.FramesPerSecond}; queue={options.QueueCapacity}.");
+            await ReadCapabilitiesAsync(camera, cancellationToken).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            // Cancellation is expected during shutdown, but a partially opened camera must still be released.
+            if (exception is not OperationCanceledException)
+                HandleError("Could not open camera", exception);
+
+            try
+            {
+                await StopCameraCoreAsync().ConfigureAwait(true);
+            }
+            catch (Exception cleanupException)
+            {
+                HandleError("Could not clean up the failed camera open", cleanupException);
+            }
+
+            if (exception is OperationCanceledException)
+                throw;
+        }
     }
 
     private async Task StopCameraCoreAsync()
     {
-        var camera = _camera;
+        var camera = ActiveCamera;
         var cancellation = _captureCancellation;
         var captureTask = _captureTask;
-        _camera = null;
+        ActiveCamera = null;
         _captureCancellation = null;
         _captureTask = null;
 
-        cancellation?.Cancel();
-        if (camera is not null)
+        Exception? shutdownError = null;
+        try
         {
-            StatusText = "Stopping camera…";
-            await camera.DisposeAsync().ConfigureAwait(true);
-        }
-
-        if (captureTask is not null)
-        {
-            try
+            cancellation?.Cancel();
+            if (camera is not null)
             {
-                await captureTask.ConfigureAwait(true);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (Exception exception)
-            {
-                HandleError("Capture loop stopped with an error", exception);
+                StatusText = "Stopping camera…";
+                await camera.DisposeAsync().ConfigureAwait(true);
             }
         }
+        catch (Exception exception)
+        {
+            shutdownError = exception;
+        }
+        finally
+        {
+            if (captureTask is not null)
+            {
+                try
+                {
+                    await captureTask.ConfigureAwait(true);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                catch (Exception exception)
+                {
+                    shutdownError ??= exception;
+                }
+            }
 
-        cancellation?.Dispose();
-        PreviewSource.Clear();
-        ClearCapabilities();
-        ActiveFormatText = "No active format";
-        StatusText = "Camera stopped.";
-        OnPropertyChanged(nameof(IsCameraOpen));
-        NotifyCommandStates();
-        Log("Camera stopped.");
+            cancellation?.Dispose();
+            PreviewSource.Clear();
+            ClearCapabilities();
+            ActiveFormatText = "No active format";
+            StatusText = "Camera stopped.";
+            OnPropertyChanged(nameof(IsCameraOpen));
+            OnPropertyChanged(nameof(ActiveCamera));
+            NotifyCommandStates();
+            Log("Camera stopped.");
+        }
+
+        if (shutdownError is not null)
+            throw shutdownError;
     }
 
     private async Task CaptureLoopAsync(Camera camera, CancellationToken cancellationToken)
@@ -697,14 +807,44 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         }
         catch (Exception exception)
         {
-            Dispatcher.UIThread.Post(() => HandleError("Capture failed", exception));
+            Dispatcher.UIThread.Post(() => _ = HandleCaptureFailureAsync(camera, exception));
+        }
+    }
+
+    private async Task HandleCaptureFailureAsync(Camera camera, Exception exception)
+    {
+        if (Volatile.Read(ref _disposed) != 0)
+            return;
+
+        await _lifecycleGate.WaitAsync().ConfigureAwait(true);
+        try
+        {
+            if (!ReferenceEquals(ActiveCamera, camera))
+                return;
+            HandleError("Capture failed", exception);
+            await StopCameraCoreAsync().ConfigureAwait(true);
+        }
+        catch (Exception shutdownException)
+        {
+            HandleError("Could not clean up failed capture", shutdownException);
+        }
+        finally
+        {
+            _lifecycleGate.Release();
         }
     }
 
     private async Task RefreshCapabilitiesAsync(CancellationToken cancellationToken)
     {
-        var camera = GetOpenCamera();
-        await ReadCapabilitiesAsync(camera, cancellationToken).ConfigureAwait(true);
+        await _lifecycleGate.WaitAsync(cancellationToken).ConfigureAwait(true);
+        try
+        {
+            await ReadCapabilitiesAsync(GetOpenCamera(), cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            _lifecycleGate.Release();
+        }
     }
 
     private async Task ReadCapabilitiesAsync(Camera camera, CancellationToken cancellationToken)
@@ -721,6 +861,10 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             StatusText = "Capabilities loaded.";
             Log(DescribeCapabilities(capabilities));
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception exception)
         {
             HandleError("Could not read camera capabilities", exception);
@@ -729,7 +873,15 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private async Task RefreshControlStateAsync(CancellationToken cancellationToken)
     {
-        await RefreshControlStateCoreAsync(GetOpenCamera(), cancellationToken).ConfigureAwait(true);
+        await _lifecycleGate.WaitAsync(cancellationToken).ConfigureAwait(true);
+        try
+        {
+            await RefreshControlStateCoreAsync(GetOpenCamera(), cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            _lifecycleGate.Release();
+        }
     }
 
     private async Task RefreshControlStateCoreAsync(Camera camera, CancellationToken cancellationToken)
@@ -771,6 +923,10 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             }
 
             Log("Control state refreshed.");
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception exception)
         {
@@ -846,6 +1002,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
                                            Func<CancellationToken, Task> operation,
                                            CancellationToken cancellationToken)
     {
+        await _lifecycleGate.WaitAsync(cancellationToken).ConfigureAwait(true);
         try
         {
             StatusText = $"Applying {description}…";
@@ -853,9 +1010,25 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             StatusText = $"Applied {description}.";
             Log($"Applied {description}.");
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (CameraException exception)
+        {
+            HandleError($"Could not apply {description}", exception);
+        }
+        catch (ArgumentOutOfRangeException exception)
+        {
+            HandleError($"Could not apply {description}", exception);
+        }
         catch (Exception exception)
         {
             HandleError($"Could not apply {description}", exception);
+        }
+        finally
+        {
+            _lifecycleGate.Release();
         }
     }
 
@@ -866,17 +1039,17 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             if (SaveFileHandler is null)
                 return;
 
-            using SKBitmap? snapshot = PreviewSource.CopySnapshot();
+            using var snapshot = PreviewSource.CopySnapshot();
             if (snapshot is null)
             {
                 StatusText = "No preview frame is available.";
                 return;
             }
 
-            using SKImage image = SKImage.FromBitmap(snapshot)
-                                  ?? throw new InvalidOperationException("Could not create a Skia image from the preview snapshot.");
-            using SKData data = image.Encode(SKEncodedImageFormat.Png, 100)
-                                ?? throw new InvalidOperationException("Could not encode the preview snapshot as PNG.");
+            using var image = SKImage.FromBitmap(snapshot)
+                              ?? throw new InvalidOperationException("Could not create a Skia image from the preview snapshot.");
+            using var data = image.Encode(SKEncodedImageFormat.Png, 100)
+                             ?? throw new InvalidOperationException("Could not encode the preview snapshot as PNG.");
 
             var request = new SaveFileRequest($"thincam-{DateTimeOffset.Now:yyyyMMdd-HHmmss}.png",
                                               "PNG image",
@@ -1016,9 +1189,9 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             ? "—"
             : TimeSpan.FromSeconds((now - lastFrame) / (double) Stopwatch.Frequency).TotalMilliseconds.ToString("0", CultureInfo.InvariantCulture) + " ms";
 
-        var format = _camera?.ActiveFormat;
+        var format = ActiveCamera?.ActiveFormat;
         ActiveFormatText = format is null
-            ? _camera is null ? "No active format" : "Waiting for first frame…"
+            ? ActiveCamera is null ? "No active format" : "Waiting for first frame…"
             : $"{format.Width}×{format.Height}, stride {format.Stride}, {format.PixelFormat}";
 
         SaveSnapshotCommand.RaiseCanExecuteChanged();
@@ -1073,14 +1246,17 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private void HandleError(string context, Exception exception)
     {
-        LastError = exception is CameraException cameraException
-            ? $"{cameraException.ErrorCode}: {cameraException.Message}"
-            : exception.Message;
+        LastError = exception switch
+        {
+            CameraException cameraException => cameraException.GetUserMessage(),
+            ArgumentOutOfRangeException => $"{context}: the value is outside the supported range.",
+            _ => $"{context}: {exception.Message}"
+        };
         StatusText = context + ".";
-        Log($"ERROR: {context}: {LastError}");
+        Log($"ERROR: {LastError}");
     }
 
-    private void Log(string message)
+    internal void Log(string message)
     {
         if (!Dispatcher.UIThread.CheckAccess())
         {
@@ -1101,9 +1277,9 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         DiagnosticText = String.Empty;
     }
 
-    private bool SetCapability(ref bool field, bool value)
+    private bool SetCapability(ref bool field, bool value, [CallerMemberName] string? propertyName = null)
     {
-        if (!SetProperty(ref field, value))
+        if (!SetProperty(ref field, value, propertyName))
             return false;
 
         NotifyCommandStates();
@@ -1128,6 +1304,20 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
         ExportDiagnosticsCommand.RaiseCanExecuteChanged();
     }
 
+    private AsyncCommand CreateCommand(Func<CancellationToken, Task> execute,
+                                       Func<bool>? canExecute = null)
+        => new(execute, canExecute, exception => HandleError("Command failed", exception));
+
+    private Task CancelCommandsAsync()
+    {
+        // Cancel and capture every execution synchronously so a command started later is unaffected.
+        var executions = new List<Task>(AsyncCommands.Count);
+        foreach (var command in AsyncCommands)
+            executions.Add(command.CancelAsync());
+
+        return Task.WhenAll(executions);
+    }
+
     private static int ToPositiveInt(decimal value, string name)
     {
         if (value <= 0 || value > Int32.MaxValue)
@@ -1140,7 +1330,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
             ? value.Value
             : fallback;
 
-    private Camera GetOpenCamera() => _camera ?? throw new InvalidOperationException("Open a camera first.");
+    private Camera GetOpenCamera() => ActiveCamera ?? throw new InvalidOperationException("Open a camera first.");
 
     private CameraPermissionStatus SafeGetPermissionStatus()
     {
@@ -1173,29 +1363,34 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
 
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    private async Task DisposeCoreAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
             return;
 
         _statsTimer.Stop();
-        await _lifecycleGate.WaitAsync().ConfigureAwait(true);
+
+        // Stop the camera before draining commands so shutdown cannot wait on a platform picker.
+        var commands = CancelCommandsAsync();
         try
         {
-            try
-            {
-                await StopCameraCoreAsync().ConfigureAwait(true);
-            }
-            catch (Exception exception)
-            {
-                HandleError("Camera shutdown failed", exception);
-            }
+            await StopCameraAsync().ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            HandleError("Camera shutdown failed", exception);
+        }
+
+        try
+        {
+            await commands.ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            HandleError("A command failed during shutdown", exception);
         }
         finally
         {
-            _lifecycleGate.Release();
-            _lifecycleGate.Dispose();
             PreviewSource.Dispose();
         }
     }

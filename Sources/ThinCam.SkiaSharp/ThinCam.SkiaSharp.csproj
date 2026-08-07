@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="$(MSBuildThisFileDirectory)../../README.md" Pack="false" />
     <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>

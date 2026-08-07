@@ -10,6 +10,19 @@ namespace ThinCam;
 public static class CameraDevices
 {
     /// <summary>
+    /// Gets the default camera device, or the first available device when no default is marked.
+    /// </summary>
+    public static CameraDevice? Default
+    {
+        get
+        {
+            var devices = Enumerate();
+            return devices.FirstOrDefault(static device => device.IsDefault)
+                   ?? (devices.Count == 0 ? null : devices[0]);
+        }
+    }
+
+    /// <summary>
     /// Enumerates the available camera devices.
     /// </summary>
     /// <returns>The available camera devices.</returns>
@@ -45,19 +58,6 @@ public static class CameraDevices
         return state.Devices;
     }
 
-    /// <summary>
-    /// Gets the default camera device, or the first available device when no default is marked.
-    /// </summary>
-    public static CameraDevice? Default
-    {
-        get
-        {
-            var devices = Enumerate();
-            return devices.FirstOrDefault(static device => device.IsDefault)
-                   ?? (devices.Count == 0 ? null : devices[0]);
-        }
-    }
-
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static unsafe void OnDevice(NativeDeviceInfo* native, nint userData)
     {
@@ -89,10 +89,14 @@ public static class CameraDevices
         }
     }
 
+    #region Nested: DeviceEnumerationState
+
     private sealed class DeviceEnumerationState
     {
         internal List<CameraDevice> Devices { get; } = [];
 
         internal Exception? Error { get; set; }
     }
+
+    #endregion
 }

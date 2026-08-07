@@ -14,15 +14,15 @@ public sealed class CameraPreviewFrameEventArgs : EventArgs
         HasFrame = hasFrame;
     }
 
-    /// <summary>Gets the monotonically increasing source version.</summary>
-    public long Version { get; }
-
-    /// <summary>Gets the published bitmap width, or zero when cleared.</summary>
-    public int PixelWidth { get; }
+    /// <summary>Gets whether a drawable frame was available.</summary>
+    public bool HasFrame { get; }
 
     /// <summary>Gets the published bitmap height, or zero when cleared.</summary>
     public int PixelHeight { get; }
 
-    /// <summary>Gets whether a drawable frame was available.</summary>
-    public bool HasFrame { get; }
+    /// <summary>Gets the published bitmap width, or zero when cleared.</summary>
+    public int PixelWidth { get; }
+
+    /// <summary>Gets the monotonically increasing source version.</summary>
+    public long Version { get; }
 }

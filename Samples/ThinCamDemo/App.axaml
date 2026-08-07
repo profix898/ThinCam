@@ -1,9 +1,11 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:tc="using:ThinCam.Avalonia"
              x:Class="ThinCamDemo.App"
              RequestedThemeVariant="Default">
     <Application.Styles>
         <FluentTheme />
+        <tc:ThinCamTheme />
         <Style Selector="Border.card">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />

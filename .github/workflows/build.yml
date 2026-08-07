@@ -12,29 +12,29 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
       - name: Run managed tests
         run: |
-          dotnet test Tests/ThinCamTests.SkiaSharp/ThinCamTests.SkiaSharp.csproj -c Release -p:ThinCamTargetFrameworks=net8.0
-          dotnet test Tests/ThinCamTests.Avalonia/ThinCamTests.Avalonia.csproj -c Release -p:ThinCamTargetFrameworks=net8.0
+          dotnet test Tests/ThinCamTests.SkiaSharp/ThinCamTests.SkiaSharp.csproj -c Release -p:ThinCamTargetFrameworks=net10.0
+          dotnet test Tests/ThinCamTests.Avalonia/ThinCamTests.Avalonia.csproj -c Release -p:ThinCamTargetFrameworks=net10.0
 
   native-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Build Windows native libraries
         shell: pwsh
         run: ./Build/build-windows.ps1 -SkipPack -SkipAndroid
       - name: Upload native artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: native-windows
           path: Build/Native/runtimes/
@@ -43,7 +43,7 @@ jobs:
   native-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Install dependencies
@@ -60,7 +60,7 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: bash ./Build/build-linux.sh --skip-pack
       - name: Upload native artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: native-linux
           path: Build/Native/runtimes/
@@ -69,7 +69,7 @@ jobs:
   native-apple:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Install Ninja
@@ -77,29 +77,29 @@ jobs:
       - name: Build macOS and iOS native libraries
         run: bash ./Build/build-macos.sh --skip-pack --skip-android
       - name: Upload native artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: native-apple
           path: Build/Native/runtimes/
           if-no-files-found: error
 
   package:
-    # Packing builds net8.0, net10.0-android and net10.0-ios. The iOS target
+    # Packing builds net10.0, net10.0-android and net10.0-ios. The iOS target
     # framework requires Xcode, so this job must run on macOS.
     needs: [test, native-windows, native-linux, native-apple]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
       - name: Install mobile workloads
         run: dotnet workload install android ios
       - name: Download all native artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: Build/Native/runtimes
           pattern: native-*
@@ -114,14 +114,18 @@ jobs:
       - name: List packages
         run: ls -la Build/Native/artifacts/packages/
       - name: Upload NuGet packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nuget-packages
-          path: Build/Native/artifacts/packages/*.nupkg
+          path: |
+            Build/Native/artifacts/packages/*.nupkg
+            Build/Native/artifacts/packages/*.snupkg
           if-no-files-found: error
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
-          files: Build/Native/artifacts/packages/*.nupkg
+          files: |
+            Build/Native/artifacts/packages/*.nupkg
+            Build/Native/artifacts/packages/*.snupkg
           generate_release_notes: true

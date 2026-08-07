@@ -8,9 +8,9 @@ ThinCam provides one managed API over the camera frameworks already shipped by W
 
 | Platform | Native backend | Managed target | Minimum |
 |---|---|---|---:|
-| Windows | Media Foundation asynchronous `IMFSourceReader` | `net8.0` | Windows 10 |
-| Linux | V4L2 streaming I/O | `net8.0` | Modern Linux with V4L2 |
-| macOS | AVFoundation | `net8.0` | macOS 12 |
+| Windows | Media Foundation asynchronous `IMFSourceReader` | `net10.0` | Windows 10 |
+| Linux | V4L2 streaming I/O | `net10.0` | Modern Linux with V4L2 |
+| macOS | AVFoundation | `net10.0` | macOS 12 |
 | Android | Camera2 NDK and `AImageReader` | `net10.0-android` | Android API 24 |
 | iOS | AVFoundation | `net10.0-ios` | iOS 15 |
 
@@ -208,18 +208,18 @@ Native libraries must be built and staged before building or packaging the manag
 
 dotnet build Sources/ThinCam/ThinCam.csproj \
   -c Release \
-  -p:ThinCamTargetFrameworks=net8.0 \
-  -f net8.0
+  -p:ThinCamTargetFrameworks=net10.0 \
+  -f net10.0
 
 dotnet build Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj \
   -c Release \
-  -p:ThinCamTargetFrameworks=net8.0 \
-  -f net8.0
+  -p:ThinCamTargetFrameworks=net10.0 \
+  -f net10.0
 
 dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
   -c Release \
-  -p:ThinCamTargetFrameworks=net8.0 \
-  -f net8.0
+  -p:ThinCamTargetFrameworks=net10.0 \
+  -f net10.0
 
 LD_LIBRARY_PATH="$PWD/Build/Native/runtimes/linux-x64/native${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
   dotnet run \
@@ -236,18 +236,18 @@ From a Visual Studio Developer PowerShell:
 
 dotnet build Sources/ThinCam/ThinCam.csproj `
   -c Release `
-  -p:ThinCamTargetFrameworks=net8.0 `
-  -f net8.0
+  -p:ThinCamTargetFrameworks=net10.0 `
+  -f net10.0
 
 dotnet build Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj `
   -c Release `
-  -p:ThinCamTargetFrameworks=net8.0 `
-  -f net8.0
+  -p:ThinCamTargetFrameworks=net10.0 `
+  -f net10.0
 
 dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj `
   -c Release `
-  -p:ThinCamTargetFrameworks=net8.0 `
-  -f net8.0
+  -p:ThinCamTargetFrameworks=net10.0 `
+  -f net10.0
 ```
 
 Set `$env:RID = "win-arm64"` before the native script for ARM64.
@@ -279,7 +279,7 @@ dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
   -r iossimulator-arm64
 ```
 
-macOS desktop uses the `net8.0` ThinCam and ThinCam.SkiaSharp build commands shown for Linux/Windows after the dylib is staged.
+macOS desktop uses the `net10.0` ThinCam and ThinCam.SkiaSharp build commands shown for Linux/Windows after the dylib is staged.
 
 ### Android native libraries and managed target
 

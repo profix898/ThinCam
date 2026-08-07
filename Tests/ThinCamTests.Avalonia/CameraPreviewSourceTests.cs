@@ -112,14 +112,22 @@ public sealed class CameraPreviewSourceTests
                               TimeSpan.Zero);
     }
 
+    #region Nested: ArrayMemoryOwner
+
     private sealed class ArrayMemoryOwner(byte[] data) : IMemoryOwner<byte>
     {
         private byte[]? _data = data;
+
+        #region IMemoryOwner<byte>
 
         /// <inheritdoc />
         public Memory<byte> Memory => _data ?? throw new ObjectDisposedException(nameof(ArrayMemoryOwner));
 
         /// <inheritdoc />
         public void Dispose() => _data = null;
+
+        #endregion
     }
+
+    #endregion
 }

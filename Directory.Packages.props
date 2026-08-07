@@ -2,25 +2,22 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
-  <ItemGroup Label="Build">
-    <PackageVersion Include="MinVer" Version="7.0.0" />
+  <ItemGroup>
+    <GlobalPackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all" />
   </ItemGroup>
-  <ItemGroup Label="Avalonia">
+  <ItemGroup>
     <PackageVersion Include="Avalonia" Version="12.1.0" />
     <PackageVersion Include="Avalonia.Android" Version="12.1.0" />
     <PackageVersion Include="Avalonia.Desktop" Version="12.1.0" />
     <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.0" />
     <PackageVersion Include="Avalonia.iOS" Version="12.1.0" />
+    <PackageVersion Include="Avalonia.Headless" Version="12.1.0" />
     <PackageVersion Include="Avalonia.Skia" Version="12.1.0" />
     <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.0" />
     <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
-  </ItemGroup>
-  <ItemGroup Label="SkiaSharp">
     <PackageVersion Include="SkiaSharp" Version="4.150.1" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="4.150.1" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.150.1" />
-  </ItemGroup>
-  <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageVersion Include="MSTest.TestAdapter" Version="4.3.2" />
     <PackageVersion Include="MSTest.TestFramework" Version="4.3.2" />

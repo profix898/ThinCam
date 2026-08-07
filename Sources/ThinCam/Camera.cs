@@ -11,35 +11,47 @@ public sealed class Camera : IAsyncDisposable
 {
     private readonly SafeCameraHandle _handle;
     private readonly CameraState _state;
-    private GCHandle _stateHandle;
     private readonly SemaphoreSlim _controlGate = new(1, 1);
+    private readonly object _disposeLock = new();
     private CameraCapabilities? _capabilities;
+    private Task? _disposeTask;
     private int _readerClaimed;
     private int _disposed;
 
     private Camera(CameraDevice device,
                    SafeCameraHandle handle,
-                   CameraState state,
-                   GCHandle stateHandle)
+                   CameraState state)
     {
         Device = device;
         _handle = handle;
         _state = state;
-        _stateHandle = stateHandle;
         Controls = new CameraControls(this);
     }
-
-    /// <summary>Gets the device opened by this camera.</summary>
-    public CameraDevice Device { get; }
-
-    /// <summary>Gets the controls exposed by this camera.</summary>
-    public CameraControls Controls { get; }
 
     /// <summary>Gets the active capture format after the first frame arrives.</summary>
     public CameraFormat? ActiveFormat => _state.ActiveFormat;
 
+    /// <summary>Gets the controls exposed by this camera.</summary>
+    public CameraControls Controls { get; }
+
+    /// <summary>Gets the device opened by this camera.</summary>
+    public CameraDevice Device { get; }
+
     /// <summary>Gets the last error reported by the camera backend.</summary>
     public CameraException? LastError => _state.LastError;
+
+    #region IAsyncDisposable
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync()
+    {
+        lock (_disposeLock)
+        {
+            return new ValueTask(_disposeTask ??= DisposeCoreAsync());
+        }
+    }
+
+    #endregion
 
     /// <summary>Opens a camera using the specified options.</summary>
     public static ValueTask<Camera> OpenAsync(CameraDevice device,
@@ -71,6 +83,7 @@ public sealed class Camera : IAsyncDisposable
         var state = new CameraState(options.QueueCapacity);
         var stateHandle = GCHandle.Alloc(state);
         nint nativeHandle = 0;
+        SafeCameraHandle? safeHandle = null;
 
         try
         {
@@ -93,20 +106,21 @@ public sealed class Camera : IAsyncDisposable
                     throw NativeHelpers.Exception(openResult);
             }
 
-            var safeHandle = new SafeCameraHandle(nativeHandle);
+            safeHandle = new SafeCameraHandle(nativeHandle, stateHandle);
             nativeHandle = 0;
 
             var startResult = NativeMethods.CameraStart(safeHandle.DangerousGetHandle());
             if (startResult != NativeStatus.Ok)
-            {
-                safeHandle.Dispose();
                 throw NativeHelpers.Exception(startResult);
-            }
 
-            return new Camera(device, safeHandle, state, stateHandle);
+            // Transfer ownership of the handle and GCHandle to the Camera/SafeHandle.
+            stateHandle = default(GCHandle);
+            return new Camera(device, safeHandle, state);
         }
         catch
         {
+            // safeHandle?.Dispose closes the native camera and frees the GCHandle atomically.
+            safeHandle?.Dispose();
             if (nativeHandle != 0)
                 NativeMethods.CameraClose(nativeHandle);
             state.Close();
@@ -130,6 +144,7 @@ public sealed class Camera : IAsyncDisposable
     /// <summary>Gets the camera's supported control capabilities.</summary>
     public async ValueTask<CameraCapabilities> GetCapabilitiesAsync(CancellationToken cancellationToken = default)
     {
+        ThrowIfDisposed();
         var cached = Volatile.Read(ref _capabilities);
         if (cached is not null)
             return cached;
@@ -171,7 +186,7 @@ public sealed class Camera : IAsyncDisposable
                     if (status == NativeStatus.NotSupported)
                         continue;
                     if (status != NativeStatus.Ok)
-                        throw NativeHelpers.Exception(status);
+                        throw NativeHelpers.Exception(status, ControlDisplayName(id));
                     ValidateControlValue(id, value);
                     values[id] = value;
                 }
@@ -192,7 +207,8 @@ public sealed class Camera : IAsyncDisposable
         if (!values.TryGetValue(id, out var value))
         {
             throw new CameraException(CameraErrorCode.NotSupported,
-                                      $"The selected camera does not support {ControlDisplayName(id)}.");
+                                      $"This camera does not support {ControlDisplayName(id)}.",
+                                      ControlDisplayName(id));
         }
         return value;
     }
@@ -200,6 +216,128 @@ public sealed class Camera : IAsyncDisposable
     internal ValueTask SetControlAsync(NativeControlValue value,
                                        CancellationToken cancellationToken)
         => SetControlsAsync([value], cancellationToken);
+
+    /// <summary>
+    /// Validates that a control is supported and the value is within the capability range,
+    /// throwing a <see cref="CameraException" /> with a descriptive message if not.
+    /// </summary>
+    internal void EnsureControlSupported(NativeControlId id)
+    {
+        var caps = Volatile.Read(ref _capabilities);
+        var controlName = ControlDisplayName(id);
+
+        if (caps is null)
+            return;
+
+        var supported = id switch
+        {
+            NativeControlId.ExposureMode => caps.Exposure.Modes.Count > 0,
+            NativeControlId.ExposureCompensationEv => caps.Exposure.CompensationEv is not null,
+            NativeControlId.ExposureDurationMicroseconds => caps.Exposure.Duration is not null,
+            NativeControlId.ExposureIso => caps.Exposure.Iso is not null,
+            NativeControlId.FocusMode => caps.Focus.Modes.Count > 0,
+            NativeControlId.FocusPosition => caps.Focus.ManualPosition is not null,
+            NativeControlId.ZoomFactor => caps.Zoom.Factor is not null,
+            NativeControlId.LightEnabled => caps.Light.IsAvailable,
+            NativeControlId.LightLevel => caps.Light.Level is not null,
+            _ => true
+        };
+
+        if (!supported)
+        {
+            throw new CameraException(CameraErrorCode.NotSupported,
+                                      $"This camera does not support {controlName}.",
+                                      controlName);
+        }
+    }
+
+    /// <summary>
+    /// Validates a double control value against the capability range.
+    /// </summary>
+    internal void EnsureControlInRange(NativeControlId id, double value)
+    {
+        var caps = Volatile.Read(ref _capabilities);
+        if (caps is null)
+            return;
+
+        var controlName = ControlDisplayName(id);
+        var range = id switch
+        {
+            NativeControlId.ExposureCompensationEv => caps.Exposure.CompensationEv,
+            NativeControlId.ExposureIso => caps.Exposure.Iso,
+            NativeControlId.FocusPosition => caps.Focus.ManualPosition,
+            NativeControlId.ZoomFactor => caps.Zoom.Factor,
+            NativeControlId.LightLevel => caps.Light.Level,
+            _ => null
+        };
+
+        if (range is null)
+            return;
+
+        if (value < range.Minimum || value > range.Maximum)
+        {
+            throw new CameraException(CameraErrorCode.InvalidArgument,
+                                      $"{controlName} value {value:0.###} is out of range. Supported: {range.Minimum:0.###} to {range.Maximum:0.###}.",
+                                      controlName);
+        }
+    }
+
+    /// <summary>
+    /// Validates a TimeSpan control value against the capability range.
+    /// </summary>
+    internal void EnsureControlInRange(NativeControlId id, TimeSpan value)
+    {
+        var caps = Volatile.Read(ref _capabilities);
+        if (caps is null)
+            return;
+
+        var controlName = ControlDisplayName(id);
+        var range = id switch
+        {
+            NativeControlId.ExposureDurationMicroseconds => caps.Exposure.Duration,
+            _ => null
+        };
+
+        if (range is null)
+            return;
+
+        if (value < range.Minimum || value > range.Maximum)
+        {
+            throw new CameraException(CameraErrorCode.InvalidArgument,
+                                      $"{controlName} value {value.TotalMilliseconds:0.###} ms is out of range. Supported: {range.Minimum.TotalMilliseconds:0.###} ms to {
+                                          range.Maximum.TotalMilliseconds:0.###} ms.",
+                                      controlName);
+        }
+    }
+
+    /// <summary>
+    /// Validates an enum control value against the supported set.
+    /// </summary>
+    internal void EnsureControlSupported<TEnum>(NativeControlId id, TEnum value)
+        where TEnum : struct, Enum
+    {
+        var caps = Volatile.Read(ref _capabilities);
+        if (caps is null)
+            return;
+
+        var controlName = ControlDisplayName(id);
+        var supported = id switch
+        {
+            NativeControlId.ExposureMode => caps.Exposure.Modes as IReadOnlySet<TEnum>,
+            NativeControlId.FocusMode => caps.Focus.Modes as IReadOnlySet<TEnum>,
+            _ => null
+        };
+
+        if (supported is null || supported.Count == 0)
+            return;
+
+        if (!supported.Contains(value))
+        {
+            throw new CameraException(CameraErrorCode.InvalidArgument,
+                                      $"{controlName} value {value} is not supported by this camera. Supported: {String.Join(", ", supported)}.",
+                                      controlName);
+        }
+    }
 
     internal async ValueTask SetControlsAsync(IReadOnlyList<NativeControlValue> values,
                                               CancellationToken cancellationToken)
@@ -221,8 +359,10 @@ public sealed class Camera : IAsyncDisposable
                     var status = NativeMethods.CameraSetControl(handle, in value);
                     if (status != NativeStatus.Ok)
                     {
-                        throw NativeHelpers.Exception(status,
-                                                      $"Could not set {ControlDisplayName(value.Id)}: {NativeHelpers.StatusMessage(status)}");
+                        var controlName = ControlDisplayName(value.Id);
+                        throw new CameraException((CameraErrorCode) (int) status,
+                                                  $"{controlName}: {NativeHelpers.StatusMessage(status)}",
+                                                  controlName);
                     }
                 }
             }, CancellationToken.None).ConfigureAwait(false);
@@ -233,8 +373,7 @@ public sealed class Camera : IAsyncDisposable
         }
     }
 
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    private async Task DisposeCoreAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
             return;
@@ -248,8 +387,6 @@ public sealed class Camera : IAsyncDisposable
         finally
         {
             _state.Queue.Drain();
-            if (_stateHandle.IsAllocated)
-                _stateHandle.Free();
             _controlGate.Release();
         }
     }
@@ -269,6 +406,7 @@ public sealed class Camera : IAsyncDisposable
                 continue;
             if (status != NativeStatus.Ok)
                 throw NativeHelpers.Exception(status);
+
             // Validate the capability structure and discriminant before trusting native ABI data.
             if (info.StructSize < (uint) Marshal.SizeOf<NativeControlInfo>() || info.Id != id ||
                 info.ValueType != ExpectedValueType(id))
@@ -435,6 +573,8 @@ public sealed class Camera : IAsyncDisposable
                 return;
             if (native->Width <= 0 || native->Height <= 0 || native->Stride <= 0)
                 return;
+            if (native->Stride < native->Width * 4)
+                return;
             if (native->PixelFormat != NativePixelFormat.Bgra32)
                 throw new InvalidOperationException("The native backend returned an unsupported pixel format.");
 
@@ -511,21 +651,23 @@ public sealed class Camera : IAsyncDisposable
         }
     }
 
+    #region Nested: CameraState
+
     private sealed class CameraState
     {
         private int _closed;
+
+        private CameraFormat? _activeFormat;
+        private CameraException? _lastError;
 
         internal CameraState(int capacity)
         {
             Queue = new FrameQueue(capacity);
         }
 
-        private CameraFormat? _activeFormat;
-        private CameraException? _lastError;
-
-        internal FrameQueue Queue { get; }
-
         internal CameraFormat? ActiveFormat => Volatile.Read(ref _activeFormat);
+
+        internal bool IsClosed => Volatile.Read(ref _closed) != 0;
 
         internal CameraException? LastError
         {
@@ -533,7 +675,7 @@ public sealed class Camera : IAsyncDisposable
             set => Volatile.Write(ref _lastError, value);
         }
 
-        internal bool IsClosed => Volatile.Read(ref _closed) != 0;
+        internal FrameQueue Queue { get; }
 
         internal void SetActiveFormat(CameraFormat format)
         {
@@ -552,4 +694,6 @@ public sealed class Camera : IAsyncDisposable
             Close(exception);
         }
     }
+
+    #endregion
 }

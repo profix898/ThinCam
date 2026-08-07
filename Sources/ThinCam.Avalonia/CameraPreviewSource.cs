@@ -14,17 +14,32 @@ public sealed class CameraPreviewSource : IDisposable
     private int _hasFrame;
     private int _disposed;
 
+    /// <summary>Gets whether a drawable frame is currently available.</summary>
+    public bool HasFrame => Volatile.Read(ref _hasFrame) != 0;
+
+    /// <summary>Gets the current source version.</summary>
+    public long Version => _buffer.Version;
+
+    #region IDisposable
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return;
+
+        Volatile.Write(ref _hasFrame, 0);
+        _buffer.Dispose();
+        FrameChanged = null;
+    }
+
+    #endregion
+
     /// <summary>
     /// Raised after a new frame is published or the source is cleared. Handlers
     /// can be invoked on the publishing thread and should return quickly.
     /// </summary>
     public event EventHandler<CameraPreviewFrameEventArgs>? FrameChanged;
-
-    /// <summary>Gets the current source version.</summary>
-    public long Version => _buffer.Version;
-
-    /// <summary>Gets whether a drawable frame is currently available.</summary>
-    public bool HasFrame => Volatile.Read(ref _hasFrame) != 0;
 
     /// <summary>
     /// Copies a ThinCam frame into reusable Skia-owned memory and publishes it.
@@ -37,7 +52,7 @@ public sealed class CameraPreviewSource : IDisposable
         ArgumentNullException.ThrowIfNull(frame);
         ThrowIfDisposed();
 
-        SKSizeI size = frame.GetSkiaSize(transform);
+        var size = frame.GetSkiaSize(transform);
         _buffer.Update(frame, transform);
         Volatile.Write(ref _hasFrame, 1);
         RaiseFrameChanged(new CameraPreviewFrameEventArgs(_buffer.Version,
@@ -72,17 +87,6 @@ public sealed class CameraPreviewSource : IDisposable
     {
         ThrowIfDisposed();
         return _buffer.TryUse(reader);
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0)
-            return;
-
-        Volatile.Write(ref _hasFrame, 0);
-        _buffer.Dispose();
-        FrameChanged = null;
     }
 
     private void RaiseFrameChanged(CameraPreviewFrameEventArgs eventArgs)

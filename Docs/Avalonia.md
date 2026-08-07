@@ -584,8 +584,8 @@ Desktop target:
 ```bash
 dotnet build Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj \
   -c Release \
-  -p:ThinCamTargetFrameworks=net8.0 \
-  -f net8.0
+  -p:ThinCamTargetFrameworks=net10.0 \
+  -f net10.0
 ```
 
 Android target:

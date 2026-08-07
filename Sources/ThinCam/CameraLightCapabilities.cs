@@ -7,5 +7,5 @@ namespace ThinCam;
 /// <param name="SupportsVariableLevel">Whether the light level can be adjusted.</param>
 /// <param name="Level">The supported light level range, if available.</param>
 public sealed record CameraLightCapabilities(bool IsAvailable,
-                                              bool SupportsVariableLevel,
-                                              NumericRange<double>? Level);
+                                             bool SupportsVariableLevel,
+                                             NumericRange<double>? Level);

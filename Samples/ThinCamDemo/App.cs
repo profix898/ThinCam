@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using ThinCamDemo.Services;
+using ThinCamDemo.ViewModels;
 using ThinCamDemo.Views;
 
 // Android implicit usings pull in Android.App.Application, so disambiguate here.
@@ -9,7 +11,7 @@ using Application = Avalonia.Application;
 namespace ThinCamDemo;
 
 /// <summary>Defines the ThinCam demo application.</summary>
-public sealed partial class App : Application
+public sealed class App : Application
 {
     /// <inheritdoc />
     public override void Initialize()
@@ -24,12 +26,20 @@ public sealed partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.MainWindow = new MainWindow();
+        {
+            desktop.MainWindow = new MainWindow { DataContext = CreateMainViewModel() };
+        }
         else if (ApplicationLifetime is IActivityApplicationLifetime activityLifetime)
-            activityLifetime.MainViewFactory = static () => new MainView();
+        {
+            activityLifetime.MainViewFactory = () => new MainView { DataContext = CreateMainViewModel() };
+        }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
-            singleView.MainView = new MainView();
+        {
+            singleView.MainView = new MainView { DataContext = CreateMainViewModel() };
+        }
 
         base.OnFrameworkInitializationCompleted();
     }
+
+    private static MainViewModel CreateMainViewModel() => new(DemoServices.Platform);
 }

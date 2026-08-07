@@ -315,7 +315,9 @@ function Build-LinuxNative {
     }
 
     Write-Host "=== Building Linux native libraries (WSL) ===" -ForegroundColor Cyan
-    & $wslExe bash -lc "cd '$wslRoot' && ./Build/build-linux.sh --skip-pack"
+    # Android was already built from Windows above; skip it in WSL to avoid
+    # reusing CMake caches that contain Windows paths.
+    & $wslExe bash -lc "cd '$wslRoot' && ./Build/build-linux.sh --skip-pack --skip-android"
     if ($LASTEXITCODE -ne 0) { throw "Linux build failed." }
 }
 

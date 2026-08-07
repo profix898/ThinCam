@@ -25,6 +25,30 @@ public sealed class SkiaFrameBuffer : IDisposable
     /// <summary>Increases after each successfully published frame.</summary>
     public long Version => Interlocked.Read(ref _version);
 
+    #region IDisposable
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposeSignaled, 1) != 0)
+            return;
+
+        lock (_lifecycleGate)
+        {
+            _disposeRequested = true;
+            while (_activeOperations != 0)
+                Monitor.Wait(_lifecycleGate);
+        }
+
+        _front?.Dispose();
+        _front = null;
+        _back?.Dispose();
+        _back = null;
+        _frontLock.Dispose();
+    }
+
+    #endregion
+
     /// <summary>
     /// Copies a frame into the reusable back buffer and publishes it as the new
     /// front buffer. Only one update is processed at a time.
@@ -37,7 +61,7 @@ public sealed class SkiaFrameBuffer : IDisposable
 
         try
         {
-            SKSizeI size = frame.GetSkiaSize(transform);
+            var size = frame.GetSkiaSize(transform);
 
             lock (_updateGate)
             {
@@ -171,26 +195,6 @@ public sealed class SkiaFrameBuffer : IDisposable
                        ?? throw new InvalidOperationException("SkiaSharp could not copy the preview bitmap.");
         });
         return snapshot;
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        if (Interlocked.Exchange(ref _disposeSignaled, 1) != 0)
-            return;
-
-        lock (_lifecycleGate)
-        {
-            _disposeRequested = true;
-            while (_activeOperations != 0)
-                Monitor.Wait(_lifecycleGate);
-        }
-
-        _front?.Dispose();
-        _front = null;
-        _back?.Dispose();
-        _back = null;
-        _frontLock.Dispose();
     }
 
     private void EnterOperation()

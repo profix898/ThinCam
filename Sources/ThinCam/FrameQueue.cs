@@ -11,11 +11,14 @@ internal sealed class FrameQueue
 
     internal FrameQueue(int capacity)
     {
+        // DropOldest lets the channel itself evict the oldest frame when full. The callback
+        // disposes the evicted frame, so the writer never reads from the channel (which would
+        // violate the SingleReader contract).
         _channel = Channel.CreateBounded<VideoFrame>(new BoundedChannelOptions(capacity)
         {
-            SingleReader = true, SingleWriter = false, FullMode = BoundedChannelFullMode.Wait,
+            SingleReader = true, SingleWriter = false, FullMode = BoundedChannelFullMode.DropOldest,
             AllowSynchronousContinuations = false
-        });
+        }, static dropped => dropped.Dispose());
     }
 
     internal void Publish(VideoFrame frame)
@@ -28,18 +31,8 @@ internal sealed class FrameQueue
                 return;
             }
 
-            // Evict stale frames when full to keep preview latency low.
-            while (!_channel.Writer.TryWrite(frame))
-            {
-                if (_channel.Reader.TryRead(out var stale))
-                {
-                    stale.Dispose();
-                    continue;
-                }
-
+            if (!_channel.Writer.TryWrite(frame))
                 frame.Dispose();
-                return;
-            }
         }
     }
 

@@ -1,6 +1,7 @@
 using Android.Runtime;
 using Avalonia;
 using Avalonia.Android;
+using ThinCamDemo.Services;
 
 namespace ThinCamDemo.Android;
 
@@ -16,6 +17,14 @@ public sealed class AndroidApplication : AvaloniaAndroidApplication<App>
     {
     }
 
+    internal static AndroidPlatformServices PlatformServices { get; } = new();
+
     /// <inheritdoc />
-    protected override AppBuilder CustomizeAppBuilder(AppBuilder builder) => base.CustomizeAppBuilder(builder).WithInterFont();
+    protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
+    {
+        DemoServices.Platform = PlatformServices;
+        return base.CustomizeAppBuilder(builder)
+                   .WithInterFont()
+                   .LogToTrace();
+    }
 }

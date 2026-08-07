@@ -24,12 +24,12 @@ public sealed class CameraControls
     public FocusControl Focus { get; }
 
     /// <summary>
-    /// Gets the zoom control.
-    /// </summary>
-    public ZoomControl Zoom { get; }
-
-    /// <summary>
     /// Gets the camera light control.
     /// </summary>
     public CameraLightControl Light { get; }
+
+    /// <summary>
+    /// Gets the zoom control.
+    /// </summary>
+    public ZoomControl Zoom { get; }
 }

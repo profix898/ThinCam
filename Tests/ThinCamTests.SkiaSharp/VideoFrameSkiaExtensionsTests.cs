@@ -18,6 +18,7 @@ public sealed class VideoFrameSkiaExtensionsTests
                                       12,
                                       0,
                                       false,
+
                                       // Two BGRA rows include eight bytes of non-pixel stride padding.
                                       [
                                           1, 2, 3, 255, 4, 5, 6, 255, 91, 92,
@@ -25,7 +26,7 @@ public sealed class VideoFrameSkiaExtensionsTests
                                           95, 96, 97, 98
                                       ]);
 
-        using SKBitmap bitmap = frame.ToSKBitmap();
+        using var bitmap = frame.ToSKBitmap();
 
         AssertColor(bitmap, 0, 0, 3, 2, 1);
         AssertColor(bitmap, 1, 0, 6, 5, 4);
@@ -42,7 +43,7 @@ public sealed class VideoFrameSkiaExtensionsTests
                                               90,
                                               false);
 
-        using SKBitmap bitmap = frame.ToSKBitmap(SkiaFrameTransform.ApplyRotation);
+        using var bitmap = frame.ToSKBitmap(SkiaFrameTransform.ApplyRotation);
 
         Assert.AreEqual(3, bitmap.Width);
         Assert.AreEqual(2, bitmap.Height);
@@ -71,7 +72,7 @@ public sealed class VideoFrameSkiaExtensionsTests
                                               270,
                                               false);
 
-        using SKBitmap bitmap = frame.ToSKBitmap(SkiaFrameTransform.ApplyRotation);
+        using var bitmap = frame.ToSKBitmap(SkiaFrameTransform.ApplyRotation);
 
         Assert.AreEqual(3, bitmap.Width);
         Assert.AreEqual(2, bitmap.Height);
@@ -100,7 +101,7 @@ public sealed class VideoFrameSkiaExtensionsTests
                                               0,
                                               true);
 
-        using SKBitmap bitmap = frame.ToSKBitmap(SkiaFrameTransform.ApplyMirroring);
+        using var bitmap = frame.ToSKBitmap(SkiaFrameTransform.ApplyMirroring);
 
         AssertLabel(bitmap, 0, 0, 3);
         AssertLabel(bitmap, 1, 0, 2);
@@ -116,7 +117,7 @@ public sealed class VideoFrameSkiaExtensionsTests
                                               90,
                                               true);
 
-        using SKBitmap bitmap = frame.ToSKBitmap(SkiaFrameTransform.Presentation);
+        using var bitmap = frame.ToSKBitmap(SkiaFrameTransform.Presentation);
 
         // Rotated result mirrored horizontally:
         // 1 3 5
@@ -134,7 +135,7 @@ public sealed class VideoFrameSkiaExtensionsTests
     public void ToSKImage_UsesTransformedDimensions()
     {
         using var frame = CreateLabelledFrame(2, 3, 90, false);
-        using SKImage image = frame.ToSKImage(SkiaFrameTransform.ApplyRotation);
+        using var image = frame.ToSKImage(SkiaFrameTransform.ApplyRotation);
 
         Assert.AreEqual(3, image.Width);
         Assert.AreEqual(2, image.Height);
@@ -181,7 +182,7 @@ public sealed class VideoFrameSkiaExtensionsTests
         using var frame = CreateLabelledFrame(1, 1, 0, false);
 
         Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
-                                                              frame.EncodeToBytes(SKEncodedImageFormat.Jpeg, quality: 101));
+                                                              frame.EncodeToBytes(SKEncodedImageFormat.Jpeg, 101));
     }
 
     /// <summary>Verifies that the frame buffer publishes its latest frame and snapshots.</summary>
@@ -200,7 +201,7 @@ public sealed class VideoFrameSkiaExtensionsTests
         long leasedVersion = 0;
         Assert.IsTrue(buffer.TryUse((_, version) => leasedVersion = version));
         Assert.AreEqual(buffer.Version, leasedVersion);
-        using SKBitmap? snapshot = buffer.CopySnapshot();
+        using var snapshot = buffer.CopySnapshot();
         Assert.IsNotNull(snapshot);
         AssertLabel(snapshot!, 0, 0, 9);
     }
@@ -266,14 +267,22 @@ public sealed class VideoFrameSkiaExtensionsTests
         Assert.AreEqual(Byte.MaxValue, color.Alpha);
     }
 
+    #region Nested: ArrayMemoryOwner
+
     private sealed class ArrayMemoryOwner(byte[] data) : IMemoryOwner<byte>
     {
         private byte[]? _data = data;
+
+        #region IMemoryOwner<byte>
 
         /// <inheritdoc />
         public Memory<byte> Memory => _data ?? throw new ObjectDisposedException(nameof(ArrayMemoryOwner));
 
         /// <inheritdoc />
         public void Dispose() => _data = null;
+
+        #endregion
     }
+
+    #endregion
 }

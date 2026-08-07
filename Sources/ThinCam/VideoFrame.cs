@@ -36,14 +36,11 @@ public sealed class VideoFrame : IDisposable
     /// <summary>Gets the valid pixel-data length in bytes.</summary>
     public int DataLength { get; }
 
-    /// <summary>Gets the frame width in pixels.</summary>
-    public int Width { get; }
-
     /// <summary>Gets the frame height in pixels.</summary>
     public int Height { get; }
 
-    /// <summary>Gets the number of bytes between adjacent pixel rows.</summary>
-    public int Stride { get; }
+    /// <summary>Gets whether presentation should mirror the frame horizontally.</summary>
+    public bool IsMirrored { get; }
 
     /// <summary>Gets the frame's pixel format.</summary>
     public PixelFormat PixelFormat { get; }
@@ -54,15 +51,22 @@ public sealed class VideoFrame : IDisposable
     /// </summary>
     public int RotationDegrees { get; }
 
-    /// <summary>Gets whether presentation should mirror the frame horizontally.</summary>
-    public bool IsMirrored { get; }
+    /// <summary>Gets the number of bytes between adjacent pixel rows.</summary>
+    public int Stride { get; }
 
     /// <summary>Gets the capture timestamp reported by the backend.</summary>
     public TimeSpan Timestamp { get; }
+
+    /// <summary>Gets the frame width in pixels.</summary>
+    public int Width { get; }
+
+    #region IDisposable
 
     /// <inheritdoc />
     public void Dispose()
     {
         Interlocked.Exchange(ref _owner, null)?.Dispose();
     }
+
+    #endregion
 }

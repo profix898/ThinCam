@@ -34,7 +34,7 @@ public static class VideoFrameSkiaExtensions
     {
         ArgumentNullException.ThrowIfNull(frame);
 
-        SKSizeI size = frame.GetSkiaSize(transform);
+        var size = frame.GetSkiaSize(transform);
         var bitmap = new SKBitmap(CreateImageInfo(size.Width, size.Height));
 
         try
@@ -58,7 +58,7 @@ public static class VideoFrameSkiaExtensions
     {
         ArgumentNullException.ThrowIfNull(frame);
 
-        using SKBitmap bitmap = frame.ToSKBitmap(transform);
+        using var bitmap = frame.ToSKBitmap(transform);
         return SKImage.FromBitmap(bitmap)
                ?? throw new InvalidOperationException("SkiaSharp could not create an image from the converted bitmap.");
     }
@@ -76,21 +76,17 @@ public static class VideoFrameSkiaExtensions
         ValidateTransform(transform);
         ValidateFrame(frame);
 
-        SKSizeI requiredSize = frame.GetSkiaSize(transform);
+        var requiredSize = frame.GetSkiaSize(transform);
         ValidateDestination(destination, requiredSize);
 
-        nint destinationPixels = destination.GetPixels();
+        var destinationPixels = destination.GetPixels();
         if (destinationPixels == 0)
-        {
             throw new InvalidOperationException("The destination SKBitmap does not expose writable pixel memory.");
-        }
 
-        int destinationStride = destination.RowBytes;
+        var destinationStride = destination.RowBytes;
         var requiredDestinationRowLength = checked(requiredSize.Width * BytesPerPixel);
         if (destinationStride < requiredDestinationRowLength)
-        {
             throw new InvalidOperationException("The destination SKBitmap row stride is smaller than its visible BGRA row.");
-        }
 
         var source = frame.Data.Span;
         var rotation = GetAppliedRotation(frame, transform);
@@ -133,7 +129,7 @@ public static class VideoFrameSkiaExtensions
         ArgumentNullException.ThrowIfNull(frame);
         ValidateQuality(quality);
 
-        using SKImage image = frame.ToSKImage(transform);
+        using var image = frame.ToSKImage(transform);
         return image.Encode(format, quality)
                ?? throw new InvalidOperationException($"SkiaSharp could not encode the frame as {format}.");
     }
@@ -148,7 +144,7 @@ public static class VideoFrameSkiaExtensions
                                        int quality = 100,
                                        SkiaFrameTransform transform = SkiaFrameTransform.None)
     {
-        using SKData data = frame.Encode(format, quality, transform);
+        using var data = frame.Encode(format, quality, transform);
         return data.ToArray();
     }
 
@@ -157,9 +153,7 @@ public static class VideoFrameSkiaExtensions
     private static void ValidateFrame(VideoFrame frame)
     {
         if (frame.PixelFormat != PixelFormat.Bgra32)
-        {
             throw new NotSupportedException($"ThinCam.SkiaSharp supports BGRA32 frames, not {frame.PixelFormat}.");
-        }
 
         if (frame.Width <= 0 || frame.Height <= 0)
             throw new ArgumentException("The frame dimensions must be positive.", nameof(frame));
@@ -222,9 +216,7 @@ public static class VideoFrameSkiaExtensions
 
         var normalized = ((frame.RotationDegrees % 360) + 360) % 360;
         if (normalized is not (0 or 90 or 180 or 270))
-        {
             throw new NotSupportedException($"ThinCam.SkiaSharp supports right-angle rotation metadata; received {frame.RotationDegrees} degrees.");
-        }
 
         return normalized;
     }

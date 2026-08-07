@@ -185,10 +185,10 @@ The public managed library is `Sources/ThinCam/ThinCam.csproj`.
 It targets:
 
 ```xml
-<TargetFrameworks>net8.0;net10.0-android;net10.0-ios</TargetFrameworks>
+<TargetFrameworks>net10.0;net10.0-android;net10.0-ios</TargetFrameworks>
 ```
 
-Desktop consumers use the `net8.0` assembly on Windows, Linux, and macOS. Mobile consumers use the platform target frameworks so the package can include platform-specific permission code and native asset wiring.
+Desktop consumers use the `net10.0` assembly on Windows, Linux, and macOS. Mobile consumers use the platform target frameworks so the package can include platform-specific permission code and native asset wiring.
 
 The project enables:
 
@@ -962,7 +962,7 @@ See [Building.md](Building.md) for exact commands.
 - **native-windows** (Windows) — builds the Windows x64 and ARM64 Media Foundation DLLs. Android is skipped (`-SkipAndroid`) to avoid duplicate artifacts.
 - **native-linux** (Ubuntu) — builds the V4L2 library, runs native pixel-conversion tests, and builds the Android NDK libraries (arm64-v8a and x86_64). This is the only job that produces Android native artifacts.
 - **native-apple** (macOS) — builds the macOS (arm64/x86_64) and iOS (device/simulator) native libraries. Android is skipped (`--skip-android`).
-- **package** (macOS) — downloads all native artifacts, merges them into `Build/Native/runtimes/`, and packs the three NuGet packages. Runs on macOS because packing the `net10.0-ios` target framework requires Xcode. On `v*` tag pushes, creates a GitHub Release with the `.nupkg` files attached.
+- **package** (macOS) — downloads all native artifacts, merges them into `Build/Native/runtimes/`, and packs the three NuGet packages. Runs on macOS because packing the `net10.0-ios` target framework requires Xcode. On `v*` tag pushes, creates a GitHub Release with the `.nupkg` and `.snupkg` files attached.
 
 CI validates compilation, package wiring, ABI shape, and conversion logic. It cannot replace physical-device testing. Permission dialogs, camera disconnects, vendor-driver quirks, suspend/resume, Light behavior, and real-time performance require hardware coverage.
 

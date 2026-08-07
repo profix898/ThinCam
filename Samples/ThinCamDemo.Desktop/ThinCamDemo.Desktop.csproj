@@ -1,20 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>12</LangVersion>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-    <ApplicationManifest Condition="$([MSBuild]::IsOSPlatform('Windows'))">app.manifest</ApplicationManifest>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <ThinCamDemoRuntimeIdentifier Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</ThinCamDemoRuntimeIdentifier>
     <ThinCamDemoRuntimeIdentifier Condition="'$(ThinCamDemoRuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</ThinCamDemoRuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Condition="$([MSBuild]::IsOSPlatform('Linux'))" />
-    <ProjectReference Include="../ThinCamDemo/ThinCamDemo.csproj" AdditionalProperties="ThinCamTargetFrameworks=net8.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <ProjectReference Include="../ThinCamDemo/ThinCamDemo.csproj" AdditionalProperties="ThinCamTargetFrameworks=net10.0" />
   </ItemGroup>
 
   <ItemGroup Condition="Exists('../../Build/Native/runtimes/$(ThinCamDemoRuntimeIdentifier)/native')">

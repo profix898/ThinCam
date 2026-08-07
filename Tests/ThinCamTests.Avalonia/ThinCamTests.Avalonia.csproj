@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -12,12 +12,14 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="MSTest.TestAdapter" />
     <PackageReference Include="MSTest.TestFramework" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../Sources/ThinCam/ThinCam.csproj" AdditionalProperties="ThinCamTargetFrameworks=net8.0" />
-    <ProjectReference Include="../../Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj" AdditionalProperties="ThinCamTargetFrameworks=net8.0" />
-    <ProjectReference Include="../../Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj" AdditionalProperties="ThinCamTargetFrameworks=net8.0" />
+    <ProjectReference Include="../../Sources/ThinCam/ThinCam.csproj" AdditionalProperties="ThinCamTargetFrameworks=net10.0" />
+    <ProjectReference Include="../../Sources/ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj" AdditionalProperties="ThinCamTargetFrameworks=net10.0" />
+    <ProjectReference Include="../../Sources/ThinCam.Avalonia/ThinCam.Avalonia.csproj" AdditionalProperties="ThinCamTargetFrameworks=net10.0" />
   </ItemGroup>
 </Project>

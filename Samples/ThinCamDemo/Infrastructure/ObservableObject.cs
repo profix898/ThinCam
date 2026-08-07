@@ -6,8 +6,12 @@ namespace ThinCamDemo.Infrastructure;
 /// <summary>Provides property-change notification support.</summary>
 public abstract class ObservableObject : INotifyPropertyChanged
 {
+    #region INotifyPropertyChanged
+
     /// <inheritdoc />
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    #endregion
 
     /// <summary>Updates a field and raises <see cref="PropertyChanged" /> when its value changes.</summary>
     /// <typeparam name="T">The property value type.</typeparam>

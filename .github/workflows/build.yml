@@ -88,6 +88,8 @@ jobs:
     # framework requires Xcode, so this job must run on macOS.
     needs: [test, native-windows, native-linux, native-apple]
     runs-on: macos-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v6
         with:

@@ -18,6 +18,7 @@ done
 build_macos() {
   local arch="$1"
   local rid="osx-$arch"
+  [[ "$arch" == "x86_64" ]] && rid="osx-x64"
   local build="$ARTIFACTS/$rid"
   echo "=== Building macOS $arch ==="
   cmake -S "$ROOT/Native/apple" -B "$build" -G Ninja \

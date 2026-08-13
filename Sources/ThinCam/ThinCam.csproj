@@ -32,40 +32,17 @@
     On Windows the native library name (thincam.dll) differs only by case from the
     managed assembly (ThinCam.dll). On a case-insensitive filesystem they collide in
     the output root. Copy the native binaries into runtimes/<RID>/native/ subdirectories
-    using Content+Link, so the DllImportResolver in NativeHelpers finds them without
+    using None+Link, so the DllImportResolver in NativeHelpers finds them without
     overwriting the managed assembly.
+
+    This is done via None items (not Content) because NuGet silently drops None items
+    that overlap with Content items, even when Content has Pack="false".
   -->
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == ''">
-    <Content Include="$(ThinCamRuntimeRoot)win-x64/native/thincam.dll"
-             Pack="false"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest"
-             Link="runtimes\win-x64\native\thincam.dll"
-             Condition="Exists('$(ThinCamRuntimeRoot)win-x64/native/thincam.dll')" />
-    <Content Include="$(ThinCamRuntimeRoot)win-arm64/native/thincam.dll"
-             Pack="false"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest"
-             Link="runtimes\win-arm64\native\thincam.dll"
-             Condition="Exists('$(ThinCamRuntimeRoot)win-arm64/native/thincam.dll')" />
-    <Content Include="$(ThinCamRuntimeRoot)linux-x64/native/libthincam.so"
-             Pack="false"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest"
-             Link="runtimes\linux-x64\native\libthincam.so"
-             Condition="Exists('$(ThinCamRuntimeRoot)linux-x64/native/libthincam.so')" />
-    <Content Include="$(ThinCamRuntimeRoot)osx-x64/native/libthincam.dylib"
-             Pack="false"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest"
-             Link="runtimes\osx-x64\native\libthincam.dylib"
-             Condition="Exists('$(ThinCamRuntimeRoot)osx-x64/native/libthincam.dylib')" />
-    <Content Include="$(ThinCamRuntimeRoot)osx-arm64/native/libthincam.dylib"
-             Pack="false"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest"
-             Link="runtimes\osx-arm64\native\libthincam.dylib"
-             Condition="Exists('$(ThinCamRuntimeRoot)osx-arm64/native/libthincam.dylib')" />
+    <None Update="$(ThinCamRuntimeRoot)**/*"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest"
+          Link="runtimes\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!--

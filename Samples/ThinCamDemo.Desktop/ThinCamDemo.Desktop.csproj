@@ -19,7 +19,7 @@
 
   <ItemGroup Condition="Exists('../../Build/Native/runtimes/$(ThinCamDemoRuntimeIdentifier)/native')">
     <Content Include="../../Build/Native/runtimes/$(ThinCamDemoRuntimeIdentifier)/native/*"
-             Link="%(Filename)%(Extension)"
+             Link="runtimes/$(ThinCamDemoRuntimeIdentifier)/native/%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest"
              CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

@@ -9,11 +9,10 @@ namespace ThinCam.SkiaSharp;
 /// </summary>
 public sealed class SkiaFrameBuffer : IDisposable
 {
-    private readonly object _lifecycleGate = new();
-    private readonly object _updateGate = new();
+    private readonly object _lifecycleGate = new object();
+    private readonly object _updateGate = new object();
 
-    private readonly ReaderWriterLockSlim _frontLock =
-        new(LockRecursionPolicy.NoRecursion);
+    private readonly ReaderWriterLockSlim _frontLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
     private SKBitmap? _front;
     private SKBitmap? _back;

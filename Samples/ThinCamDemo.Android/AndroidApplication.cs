@@ -17,7 +17,7 @@ public sealed class AndroidApplication : AvaloniaAndroidApplication<App>
     {
     }
 
-    internal static AndroidPlatformServices PlatformServices { get; } = new();
+    internal static AndroidPlatformServices PlatformServices { get; } = new AndroidPlatformServices();
 
     /// <inheritdoc />
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)

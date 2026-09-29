@@ -61,7 +61,10 @@ public sealed class FocusControl
         _camera.EnsureControlSupported(NativeControlId.FocusPosition);
         _camera.EnsureControlInRange(NativeControlId.FocusPosition, position);
         return
-            _camera.SetControlsAsync([NativeControlValue.Enum(NativeControlId.FocusMode, (int) FocusMode.Manual), NativeControlValue.Double(NativeControlId.FocusPosition, position)],
+            _camera.SetControlsAsync([
+                                         NativeControlValue.Enum(NativeControlId.FocusMode, (int) FocusMode.Manual),
+                                         NativeControlValue.Double(NativeControlId.FocusPosition, position)
+                                     ],
                                      cancellationToken);
     }
 }

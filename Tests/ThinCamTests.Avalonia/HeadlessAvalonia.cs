@@ -10,7 +10,7 @@ namespace ThinCamTests.Avalonia;
 /// </summary>
 public static class HeadlessAvalonia
 {
-    private static readonly BlockingCollection<(Action Work, TaskCompletionSource Completion)> Queue = new();
+    private static readonly BlockingCollection<(Action Work, TaskCompletionSource Completion)> Queue = new BlockingCollection<(Action Work, TaskCompletionSource Completion)>();
     private static Thread? _thread;
 
     /// <summary>Starts the headless Avalonia thread. Blocks until Avalonia is initialized.</summary>

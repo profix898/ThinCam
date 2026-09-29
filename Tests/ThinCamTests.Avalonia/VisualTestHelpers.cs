@@ -61,14 +61,14 @@ internal static class VisualTestHelpers
     }
 
     /// <summary>Invokes a non-public instance method, for exercising internal control behaviour.</summary>
-    public static void Invoke(object target, string method, params object?[] args) =>
-        target.GetType()
-              .GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!
-              .Invoke(target, args);
+    public static void Invoke(object target, string method, params object?[] args)
+        => target.GetType()
+                 .GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!
+                 .Invoke(target, args);
 
     /// <summary>Sets a public property that has a non-public setter.</summary>
-    public static void SetReadOnlyProperty(object target, string property, object value) =>
-        target.GetType()
-              .GetProperty(property, BindingFlags.Instance | BindingFlags.Public)!
-              .SetValue(target, value);
+    public static void SetReadOnlyProperty(object target, string property, object value)
+        => target.GetType()
+                 .GetProperty(property, BindingFlags.Instance | BindingFlags.Public)!
+                 .SetValue(target, value);
 }

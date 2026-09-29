@@ -26,20 +26,14 @@ public sealed class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
             desktop.MainWindow = new MainWindow { DataContext = CreateMainViewModel() };
-        }
         else if (ApplicationLifetime is IActivityApplicationLifetime activityLifetime)
-        {
             activityLifetime.MainViewFactory = () => new MainView { DataContext = CreateMainViewModel() };
-        }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
-        {
             singleView.MainView = new MainView { DataContext = CreateMainViewModel() };
-        }
 
         base.OnFrameworkInitializationCompleted();
     }
 
-    private static MainViewModel CreateMainViewModel() => new(DemoServices.Platform);
+    private static MainViewModel CreateMainViewModel() => new MainViewModel(DemoServices.Platform);
 }

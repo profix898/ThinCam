@@ -148,7 +148,7 @@ public static class VideoFrameSkiaExtensions
         return data.ToArray();
     }
 
-    internal static SKImageInfo CreateImageInfo(int width, int height) => new(width, height, SKColorType.Bgra8888, SKAlphaType.Opaque);
+    internal static SKImageInfo CreateImageInfo(int width, int height) => new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Opaque);
 
     private static void ValidateFrame(VideoFrame frame)
     {
@@ -236,8 +236,7 @@ public static class VideoFrameSkiaExtensions
         {
             var sourceRow = source.Slice(checked(y * sourceStride),
                                          rowLength);
-            Span<byte> destinationRow = new(destination + checked(y * destinationStride),
-                                            rowLength);
+            Span<byte> destinationRow = new Span<byte>(destination + checked(y * destinationStride), rowLength);
             sourceRow.CopyTo(destinationRow);
         }
     }

@@ -11,8 +11,8 @@ public sealed class Camera : IAsyncDisposable
 {
     private readonly SafeCameraHandle _handle;
     private readonly CameraState _state;
-    private readonly SemaphoreSlim _controlGate = new(1, 1);
-    private readonly object _disposeLock = new();
+    private readonly SemaphoreSlim _controlGate = new SemaphoreSlim(1, 1);
+    private readonly object _disposeLock = new object();
     private CameraCapabilities? _capabilities;
     private Task? _disposeTask;
     private int _readerClaimed;
@@ -87,7 +87,7 @@ public sealed class Camera : IAsyncDisposable
 
         try
         {
-            NativeOpenOptions nativeOptions = new()
+            NativeOpenOptions nativeOptions = new NativeOpenOptions
             {
                 StructSize = (uint) Marshal.SizeOf<NativeOpenOptions>(), Width = options.Width, Height = options.Height, FramesPerSecond = options.FramesPerSecond,
                 PixelFormat = (NativePixelFormat) (int) options.PixelFormat
@@ -537,9 +537,7 @@ public sealed class Camera : IAsyncDisposable
         if (!valid)
             throw InvalidControlState();
 
-        static CameraException InvalidControlState()
-            => new(CameraErrorCode.Platform,
-                   "The native backend returned invalid control state data.");
+        static CameraException InvalidControlState() => new CameraException(CameraErrorCode.Platform, "The native backend returned invalid control state data.");
     }
 
     private static string ControlDisplayName(NativeControlId id)

@@ -5,7 +5,7 @@ namespace ThinCam;
 
 internal sealed class FrameQueue
 {
-    private readonly object _gate = new();
+    private readonly object _gate = new object();
     private readonly Channel<VideoFrame> _channel;
     private bool _completed;
 

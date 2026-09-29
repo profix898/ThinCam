@@ -17,8 +17,8 @@ public sealed class CameraControlsValidationTests
     /// silently and that would hide out-of-range entries instead of reporting them.
     /// </summary>
     [TestMethod]
-    public void Numeric_editors_do_not_silently_clamp() =>
-        HeadlessAvalonia.Run(() =>
+    public void Numeric_editors_do_not_silently_clamp()
+        => HeadlessAvalonia.Run(() =>
         {
             var (controls, _) = WithExposureRange();
 
@@ -34,8 +34,8 @@ public sealed class CameraControlsValidationTests
 
     /// <summary>An out-of-range duration must be reported and must never reach the camera.</summary>
     [TestMethod]
-    public void Out_of_range_duration_reports_a_validation_error() =>
-        HeadlessAvalonia.Run(() =>
+    public void Out_of_range_duration_reports_a_validation_error()
+        => HeadlessAvalonia.Run(() =>
         {
             var (controls, window) = WithExposureRange();
             var durationEditor = FindAll<NumericUpDown>(controls)[0];
@@ -55,8 +55,8 @@ public sealed class CameraControlsValidationTests
 
     /// <summary>Correcting the value must clear the banner, the pseudo-class, and the adorner.</summary>
     [TestMethod]
-    public void Correcting_the_value_clears_the_error() =>
-        HeadlessAvalonia.Run(() =>
+    public void Correcting_the_value_clears_the_error()
+        => HeadlessAvalonia.Run(() =>
         {
             var (controls, window) = WithExposureRange();
             var durationEditor = FindAll<NumericUpDown>(controls)[0];
@@ -76,8 +76,8 @@ public sealed class CameraControlsValidationTests
 
     /// <summary>An out-of-range ISO must be reported independently of the duration.</summary>
     [TestMethod]
-    public void Out_of_range_iso_reports_a_validation_error() =>
-        HeadlessAvalonia.Run(() =>
+    public void Out_of_range_iso_reports_a_validation_error()
+        => HeadlessAvalonia.Run(() =>
         {
             var (controls, window) = WithExposureRange();
             var isoEditor = FindAll<NumericUpDown>(controls)[1];
@@ -96,8 +96,8 @@ public sealed class CameraControlsValidationTests
     /// fall back to zero, which then fails range validation like any other bad value.
     /// </summary>
     [TestMethod]
-    public void Clearing_an_editor_falls_back_to_zero_instead_of_throwing() =>
-        HeadlessAvalonia.Run(() =>
+    public void Clearing_an_editor_falls_back_to_zero_instead_of_throwing()
+        => HeadlessAvalonia.Run(() =>
         {
             var (controls, window) = WithExposureRange();
             var editors = FindAll<NumericUpDown>(controls);

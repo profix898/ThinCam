@@ -1,57 +1,48 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>$(ThinCamTargetFrameworks)</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>12</LangVersion>
-    <IsAotCompatible>true</IsAotCompatible>
-    <IsTrimmable>true</IsTrimmable>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>ThinCam</PackageId>
-    <Description>Thin, platform-native camera frame capture and camera controls for .NET.</Description>
-    <Authors>ThinCam contributors</Authors>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>camera;webcam;capture;controls;exposure;focus;zoom;v4l2;media-foundation;avfoundation;camera2</PackageTags>
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>$(ThinCamTargetFrameworks)</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>12</LangVersion>
+        <IsAotCompatible>true</IsAotCompatible>
+        <IsTrimmable>true</IsTrimmable>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <ThinCamRuntimeRoot>$(MSBuildThisFileDirectory)../../Build/Native/runtimes/</ThinCamRuntimeRoot>
-  </PropertyGroup>
+    <PropertyGroup>
+        <ThinCamRuntimeRoot>$(MSBuildThisFileDirectory)../../Build/Native/runtimes/</ThinCamRuntimeRoot>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="../../Build/ThinCam.targets" Pack="true" PackagePath="buildTransitive/ThinCam.targets" />
-    <None Include="$(ThinCamRuntimeRoot)**/*" Pack="true" PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="../../Build/ThinCam.targets" Pack="true" PackagePath="buildTransitive/ThinCam.targets"/>
+        <None Include="$(ThinCamRuntimeRoot)**/*" Pack="true" PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)"/>
+    </ItemGroup>
 
-  <!--
-    On Windows the native library name (thincam.dll) differs only by case from the
-    managed assembly (ThinCam.dll). On a case-insensitive filesystem they collide in
-    the output root. Copy the native binaries into runtimes/<RID>/native/ subdirectories
-    using None+Link, so the DllImportResolver in NativeHelpers finds them without
-    overwriting the managed assembly.
+    <!--
+      On Windows the native library name (thincam.dll) differs only by case from the
+      managed assembly (ThinCam.dll). On a case-insensitive filesystem they collide in
+      the output root. Copy the native binaries into runtimes/<RID>/native/ subdirectories
+      using None+Link, so the DllImportResolver in NativeHelpers finds them without
+      overwriting the managed assembly.
+  
+      This is done via None items (not Content) because NuGet silently drops None items
+      that overlap with Content items, even when Content has Pack="false".
+    -->
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == ''">
+        <None Update="$(ThinCamRuntimeRoot)**/*"
+              CopyToOutputDirectory="PreserveNewest"
+              CopyToPublishDirectory="PreserveNewest"
+              Link="runtimes\%(RecursiveDir)%(Filename)%(Extension)"/>
+    </ItemGroup>
 
-    This is done via None items (not Content) because NuGet silently drops None items
-    that overlap with Content items, even when Content has Pack="false".
-  -->
-  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == ''">
-    <None Update="$(ThinCamRuntimeRoot)**/*"
-          CopyToOutputDirectory="PreserveNewest"
-          CopyToPublishDirectory="PreserveNewest"
-          Link="runtimes\%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
-
-  <!--
-    The .NET Android SDK globs **/*.so into AndroidNativeLibrary. The staged
-    runtimes/ tree is not laid out by Android ABI, so the globbed items are
-    removed here and re-added with explicit Abi metadata by ThinCam.targets.
-  -->
-  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-    <AndroidNativeLibrary Remove="$(ThinCamRuntimeRoot)**/*.so" />
-  </ItemGroup>
-  <Import Project="../../Build/ThinCam.targets" Condition="Exists('../../Build/ThinCam.targets')" />
+    <!--
+      The .NET Android SDK globs **/*.so into AndroidNativeLibrary. The staged
+      runtimes/ tree is not laid out by Android ABI, so the globbed items are
+      removed here and re-added with explicit Abi metadata by ThinCam.targets.
+    -->
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+        <AndroidNativeLibrary Remove="$(ThinCamRuntimeRoot)**/*.so"/>
+    </ItemGroup>
+    <Import Project="../../Build/ThinCam.targets" Condition="Exists('../../Build/ThinCam.targets')"/>
 </Project>

@@ -278,16 +278,16 @@ Frame delivery continues while controls are changed. A backend must not call app
 
 ## Platform implementation matrix
 
-| Capability | Windows | Linux | macOS | iOS | Android |
-|---|---|---|---|---|---|
-| Exposure mode | Driver `IAMCameraControl` | V4L2 exposure controls | AVFoundation exposure modes (no manual) | AVFoundation exposure modes | Camera2 AE mode/request |
-| Compensation | Not exposed by the current Windows backend | V4L2 auto-exposure bias | Not exposed by AVFoundation on macOS | AVFoundation target bias | Camera2 AE compensation |
-| Manual duration | Driver logarithmic exposure value | V4L2 absolute exposure | Not exposed by AVFoundation on macOS | AVFoundation custom duration | Camera2 sensor exposure time |
-| ISO | Not exposed by the current Windows backend | V4L2 ISO sensitivity | Not exposed by AVFoundation on macOS | AVFoundation custom ISO | Camera2 sensor sensitivity |
-| Focus | Driver `IAMCameraControl` | V4L2 focus controls | AVFoundation focus modes | AVFoundation focus modes/lens position | Camera2 AF and lens distance |
-| Zoom | Driver `IAMCameraControl` | V4L2 absolute zoom | Not exposed by AVFoundation on macOS | AVFoundation video zoom factor | Camera2 crop region |
-| Light | Extended camera control when available | V4L2 continuous LED mode | AVFoundation device light | AVFoundation device light | Camera2 flash mode |
-| Variable light level | Windows adjustable-power extended control | V4L2 light intensity | AVFoundation level | AVFoundation level | Not exposed by the current Android backend |
+| Capability           | Windows                                    | Linux                    | macOS                                   | iOS                                    | Android                                    |
+| -------------------- | ------------------------------------------ | ------------------------ | --------------------------------------- | -------------------------------------- | ------------------------------------------ |
+| Exposure mode        | Driver `IAMCameraControl`                  | V4L2 exposure controls   | AVFoundation exposure modes (no manual) | AVFoundation exposure modes            | Camera2 AE mode/request                    |
+| Compensation         | Not exposed by the current Windows backend | V4L2 auto-exposure bias  | Not exposed by AVFoundation on macOS    | AVFoundation target bias               | Camera2 AE compensation                    |
+| Manual duration      | Driver logarithmic exposure value          | V4L2 absolute exposure   | Not exposed by AVFoundation on macOS    | AVFoundation custom duration           | Camera2 sensor exposure time               |
+| ISO                  | Not exposed by the current Windows backend | V4L2 ISO sensitivity     | Not exposed by AVFoundation on macOS    | AVFoundation custom ISO                | Camera2 sensor sensitivity                 |
+| Focus                | Driver `IAMCameraControl`                  | V4L2 focus controls      | AVFoundation focus modes                | AVFoundation focus modes/lens position | Camera2 AF and lens distance               |
+| Zoom                 | Driver `IAMCameraControl`                  | V4L2 absolute zoom       | Not exposed by AVFoundation on macOS    | AVFoundation video zoom factor         | Camera2 crop region                        |
+| Light                | Extended camera control when available     | V4L2 continuous LED mode | AVFoundation device light               | AVFoundation device light              | Camera2 flash mode                         |
+| Variable light level | Windows adjustable-power extended control  | V4L2 light intensity     | AVFoundation level                      | AVFoundation level                     | Not exposed by the current Android backend |
 
 ### Windows notes
 
@@ -329,14 +329,4 @@ tc_status tc_camera_set_control(
     const tc_control_value* value);
 ```
 
-The ABI uses generic typed values so new controls can be added without adding a function per property. See [Abi.md](Abi.md) for binary layout and versioning rules.
-
-## Current limitations
-
-- Capability changes are not pushed as events.
-- Controls cannot be configured before `Camera.OpenAsync` completes.
-- Multi-control operations are serialized but are not transactionally atomic across the native driver.
-- Per-frame exposure, ISO, focus, zoom, and Light metadata are not included in `VideoFrame`.
-- Windows exposure compensation and ISO are not currently implemented.
-- Android variable Light level is not currently implemented.
-- Hardware testing remains necessary across representative camera models and drivers.
+The ABI uses generic typed values so new controls can be added without adding a function per property. See [ABI.md](ABI.md) for binary layout and versioning rules.

@@ -2,7 +2,7 @@
 
 This document explains the design of ThinCam from the public C# API down to each operating system's native camera stack. It is intended for maintainers, contributors, reviewers, and application developers who need to understand how frames move through the library and where platform behavior differs.
 
-For exact build commands, toolchain prerequisites, native artifact staging, managed project builds, and NuGet packaging, see [Building.md](Building.md). For public API usage, see [Api.md](Api.md), and for the capability-driven Exposure, Focus, Zoom, and Light surface, see [Controls.md](Controls.md). Optional presentation layers are documented in [SkiaSharp.md](SkiaSharp.md) and [Avalonia.md](Avalonia.md). The binary interface shared by C# and the native libraries is summarized in [Abi.md](Abi.md).
+For exact build commands, toolchain prerequisites, native artifact staging, managed project builds, and NuGet packaging, see [Building.md](Building.md). For public API usage, see [API.md](API.md), and for the capability-driven Exposure, Focus, Zoom, and Light surface, see [Controls.md](Controls.md). Optional presentation layers are documented in [SkiaSharp.md](SkiaSharp.md) and [Avalonia.md](Avalonia.md). The binary interface shared by C# and the native libraries is summarized in [ABI.md](ABI.md).
 
 ## Contents
 
@@ -37,13 +37,13 @@ ThinCam provides a small, frame-oriented camera capture API for .NET without emb
 
 The project deliberately uses the camera framework already provided by each operating system:
 
-| Platform | Native capture API | ThinCam implementation |
-|---|---|---|
-| Windows | Media Foundation | Asynchronous `IMFSourceReader` |
-| Linux | Video4Linux2 | Streaming I/O with `mmap` buffers |
-| macOS | AVFoundation | `AVCaptureSession` and `AVCaptureVideoDataOutput` |
-| iOS | AVFoundation | `AVCaptureSession` and `AVCaptureVideoDataOutput` |
-| Android | Camera2 NDK | `ACameraManager`, capture session, and `AImageReader` |
+| Platform | Native capture API | ThinCam implementation                                |
+| -------- | ------------------ | ----------------------------------------------------- |
+| Windows  | Media Foundation   | Asynchronous `IMFSourceReader`                        |
+| Linux    | Video4Linux2       | Streaming I/O with `mmap` buffers                     |
+| macOS    | AVFoundation       | `AVCaptureSession` and `AVCaptureVideoDataOutput`     |
+| iOS      | AVFoundation       | `AVCaptureSession` and `AVCaptureVideoDataOutput`     |
+| Android  | Camera2 NDK        | `ACameraManager`, capture session, and `AImageReader` |
 
 The common public behavior is intentionally narrow:
 
@@ -204,16 +204,16 @@ The project enables:
 
 The main public surface is:
 
-| Type | Purpose |
-|---|---|
-| `CameraPermissions` | Inspect and request camera permission |
-| `CameraDevices` | Enumerate devices and find the backend-selected default |
-| `CameraDevice` | Opaque device identifier, display name, position, and default flag |
-| `CameraOpenOptions` | Preferred width, height, frame rate, pixel format, and queue capacity |
-| `Camera` | Owns an open and running native camera |
-| `VideoFrame` | Owns one pooled managed frame buffer |
-| `CameraFormat` | Actual dimensions, stride, and pixel format observed from the first frame |
-| `CameraException` | Stable cross-platform error with a `CameraErrorCode` |
+| Type                | Purpose                                                                   |
+| ------------------- | ------------------------------------------------------------------------- |
+| `CameraPermissions` | Inspect and request camera permission                                     |
+| `CameraDevices`     | Enumerate devices and find the backend-selected default                   |
+| `CameraDevice`      | Opaque device identifier, display name, position, and default flag        |
+| `CameraOpenOptions` | Preferred width, height, frame rate, pixel format, and queue capacity     |
+| `Camera`            | Owns an open and running native camera                                    |
+| `VideoFrame`        | Owns one pooled managed frame buffer                                      |
+| `CameraFormat`      | Actual dimensions, stride, and pixel format observed from the first frame |
+| `CameraException`   | Stable cross-platform error with a `CameraErrorCode`                      |
 
 The library does not expose backend-specific handles or native types.
 
@@ -336,19 +336,19 @@ The actual frame rate is not currently exposed because the backends do not all r
 
 Native status values map numerically to `CameraErrorCode`.
 
-| Error code | Meaning |
-|---|---|
-| `InvalidArgument` | Invalid API or ABI input |
-| `NotSupported` | Device or backend capability is unsupported |
-| `PermissionDenied` | OS or device permission prevents access |
-| `DeviceNotFound` | Device is missing or disconnected |
-| `DeviceBusy` | Another process or camera session owns the device |
-| `FormatNotSupported` | Requested/required format cannot be configured |
-| `NotRunning` | Operation requires an active stream |
-| `AlreadyRunning` | Duplicate start attempt |
-| `Platform` | Unclassified native platform failure |
-| `Timeout` | Platform startup or state transition timed out |
-| `Cancelled` | Native operation was cancelled |
+| Error code           | Meaning                                           |
+| -------------------- | ------------------------------------------------- |
+| `InvalidArgument`    | Invalid API or ABI input                          |
+| `NotSupported`       | Device or backend capability is unsupported       |
+| `PermissionDenied`   | OS or device permission prevents access           |
+| `DeviceNotFound`     | Device is missing or disconnected                 |
+| `DeviceBusy`         | Another process or camera session owns the device |
+| `FormatNotSupported` | Requested/required format cannot be configured    |
+| `NotRunning`         | Operation requires an active stream               |
+| `AlreadyRunning`     | Duplicate start attempt                           |
+| `Platform`           | Unclassified native platform failure              |
+| `Timeout`            | Platform startup or state transition timed out    |
+| `Cancelled`          | Native operation was cancelled                    |
 
 Startup failures are thrown from `Camera.OpenAsync`. Runtime failures are published to the frame stream as a terminal exception and stored in `Camera.LastError`. A fatal native error completes the queue, causing the `await foreach` loop to fail with `CameraException`.
 
@@ -809,13 +809,13 @@ If cleanup fails during `tc_camera_close`, the function does not throw across th
 
 Permission behavior is not fully uniform because the operating systems use different security models.
 
-| Platform | `GetStatus` behavior | `RequestAsync` behavior | Host configuration |
-|---|---|---|---|
-| Windows | Reports granted; activation can still fail | Completes as granted | Windows privacy settings apply |
-| Linux | Tests access to `/dev/video*` | Rechecks; no prompt | Device ACL/group/udev/container mapping |
-| macOS | Uses AVFoundation authorization status | Displays Apple permission prompt | `NSCameraUsageDescription`, possibly entitlement |
-| iOS | Uses AVFoundation authorization status | Displays Apple permission prompt | `NSCameraUsageDescription` |
-| Android | Uses managed Android permission API | Requires `Activity` overload | Manifest permission plus runtime grant |
+| Platform | `GetStatus` behavior                       | `RequestAsync` behavior          | Host configuration                               |
+| -------- | ------------------------------------------ | -------------------------------- | ------------------------------------------------ |
+| Windows  | Reports granted; activation can still fail | Completes as granted             | Windows privacy settings apply                   |
+| Linux    | Tests access to `/dev/video*`              | Rechecks; no prompt              | Device ACL/group/udev/container mapping          |
+| macOS    | Uses AVFoundation authorization status     | Displays Apple permission prompt | `NSCameraUsageDescription`, possibly entitlement |
+| iOS      | Uses AVFoundation authorization status     | Displays Apple permission prompt | `NSCameraUsageDescription`                       |
+| Android  | Uses managed Android permission API        | Requires `Activity` overload     | Manifest permission plus runtime grant           |
 
 Application code should not assume that `RequestAsync` can repair every denied status. On Windows and Linux, the user may need to change system configuration outside the application.
 
@@ -823,12 +823,12 @@ Application code should not assume that `RequestAsync` can repair every denied s
 
 `CameraDevice.Id` is opaque and platform-specific:
 
-| Platform | ID source |
-|---|---|
-| Windows | Media Foundation symbolic link |
-| Linux | `/dev/videoN` path |
-| macOS/iOS | AVFoundation `uniqueID` |
-| Android | Camera2 camera ID |
+| Platform  | ID source                      |
+| --------- | ------------------------------ |
+| Windows   | Media Foundation symbolic link |
+| Linux     | `/dev/videoN` path             |
+| macOS/iOS | AVFoundation `uniqueID`        |
+| Android   | Camera2 camera ID              |
 
 Applications may persist an ID as a preference, but must handle it disappearing or changing after hardware, driver, OS, or permission changes.
 
@@ -884,14 +884,14 @@ Current behavior:
 
 ThinCam callbacks do not run on the application's UI thread.
 
-| Layer | Typical execution context |
-|---|---|
-| `Camera.OpenAsync` native startup | `Task.Run` worker |
-| Windows frames | Media Foundation callback thread |
-| Linux frames | ThinCam capture worker thread |
-| Apple frames | Dedicated serial dispatch queue |
-| Android frames | AImageReader callback thread |
-| Managed queue consumption | Consumer's asynchronous continuation context |
+| Layer                             | Typical execution context                    |
+| --------------------------------- | -------------------------------------------- |
+| `Camera.OpenAsync` native startup | `Task.Run` worker                            |
+| Windows frames                    | Media Foundation callback thread             |
+| Linux frames                      | ThinCam capture worker thread                |
+| Apple frames                      | Dedicated serial dispatch queue              |
+| Android frames                    | AImageReader callback thread                 |
+| Managed queue consumption         | Consumer's asynchronous continuation context |
 
 The frame callback performs validation, memory rental, one memory copy, and queue publication. Expensive image processing does not run in the callback; it runs in the consumer loop.
 

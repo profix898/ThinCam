@@ -1,67 +1,66 @@
 <Project>
-  <!-- GitInfo (SemVer) -->
-  <Target Name="GitInfo" BeforeTargets="MinVer">
-    <Exec Command="git rev-parse --short HEAD" ConsoleToMSBuild="true" StandardOutputImportance="low" ContinueOnError="true">
-      <Output TaskParameter="ConsoleOutput" PropertyName="GitSHA"/>
-    </Exec>
-  </Target>
-  <PropertyGroup>
-    <MinVerMinimumMajorMinor>1.0</MinVerMinimumMajorMinor>
-    <MinVerDefaultPreReleaseIdentifiers>dev</MinVerDefaultPreReleaseIdentifiers>
-    <MinVerBuildMetadata Condition=" '$(Configuration)' == 'Debug' ">$(GitSHA)</MinVerBuildMetadata>
-    <MinVerVerbosity>normal</MinVerVerbosity>
-    <MinVerTagPrefix>v</MinVerTagPrefix>
-  </PropertyGroup>
-  <Target Name="Versioning" AfterTargets="MinVer">
+    <!-- GitInfo (SemVer) -->
+    <Target Name="GitInfo" BeforeTargets="MinVer">
+        <Exec Command="git rev-parse --short HEAD" ConsoleToMSBuild="true" StandardOutputImportance="low" ContinueOnError="true">
+            <Output TaskParameter="ConsoleOutput" PropertyName="GitSHA"/>
+        </Exec>
+    </Target>
     <PropertyGroup>
-      <BuildNumber>$([System.DateTime]::UtcNow.Subtract($([System.DateTime]::Parse("2026/06/01"))).TotalDays.ToString("0"))</BuildNumber>
-      <Version>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(BuildNumber)-dev+$(GitSHA)</Version>
-      <Version Condition=" '$(Configuration)' == 'Release' ">$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(BuildNumber)</Version>
-      <PackageVersion>$(Version)</PackageVersion>
+        <MinVerMinimumMajorMinor>1.0</MinVerMinimumMajorMinor>
+        <MinVerDefaultPreReleaseIdentifiers>dev</MinVerDefaultPreReleaseIdentifiers>
+        <MinVerBuildMetadata Condition=" '$(Configuration)' == 'Debug' ">$(GitSHA)</MinVerBuildMetadata>
+        <MinVerVerbosity>normal</MinVerVerbosity>
+        <MinVerTagPrefix>v</MinVerTagPrefix>
     </PropertyGroup>
-    <Message Text="Version: $(Version)" Importance="high"/>
-    <Message Text="FileVersion: $(FileVersion)" Importance="high"/>
-    <Message Text="AssemblyVersion: $(AssemblyVersion)" Importance="high"/>
-  </Target>
-  <!-- Project Defaults  -->
-  <PropertyGroup>
-    <LangVersion>14.0</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>false</ImplicitUsings>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <AnalysisLevel>latest</AnalysisLevel>
-    <Deterministic>true</Deterministic>
-    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
-    <ThinCamTargetFrameworks Condition="'$(ThinCamTargetFrameworks)' == ''">net10.0;net10.0-android;net10.0-ios</ThinCamTargetFrameworks>
-    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-  </PropertyGroup>
-	<!-- Assembly Info -->
-	<PropertyGroup>
-		<GitSHA>nogit</GitSHA>
-	</PropertyGroup>
-	<PropertyGroup>
-		<Product>ThinCam</Product>
-		<Description>Thin, platform-native camera frame capture and camera controls for .NET.</Description>
-		<Authors>Thilo Viereck</Authors>
-		<Company></Company>
-		<Copyright>Copyright &#169; Thilo Viereck 2026-$([System.DateTime]::Now.ToString(`yyyy`))</Copyright>
-		<DefaultLanguage>en-US</DefaultLanguage>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PackageProjectUrl>https://github.com/profix898/ThinCam</PackageProjectUrl>
-    	<RepositoryUrl>https://github.com/profix898/ThinCam</RepositoryUrl>
-    	<RepositoryType>git</RepositoryType>
-	</PropertyGroup>
-  <!-- Packaging -->
-  <PropertyGroup>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PackageOutputPath>./../</PackageOutputPath>
-  </PropertyGroup>
-  <!-- NuGet Assets -->
-  <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" Visible="false" PackagePath="/" Link="README.md" />
-  </ItemGroup>
+    <Target Name="Versioning" AfterTargets="MinVer">
+        <PropertyGroup>
+            <BuildNumber>$([System.DateTime]::UtcNow.Subtract($([System.DateTime]::Parse("2026/06/01"))).TotalDays.ToString("0"))</BuildNumber>
+            <Version>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(BuildNumber)-dev+$(GitSHA)</Version>
+            <Version Condition=" '$(Configuration)' == 'Release' ">$(MinVerMajor).$(MinVerMinor).$(MinVerPatch).$(BuildNumber)</Version>
+            <PackageVersion>$(Version)</PackageVersion>
+        </PropertyGroup>
+        <Message Text="Version: $(Version)" Importance="high"/>
+        <Message Text="FileVersion: $(FileVersion)" Importance="high"/>
+        <Message Text="AssemblyVersion: $(AssemblyVersion)" Importance="high"/>
+    </Target>
+    <!-- Project Defaults  -->
+    <PropertyGroup>
+        <LangVersion>14.0</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>false</ImplicitUsings>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <AnalysisLevel>latest</AnalysisLevel>
+        <Deterministic>true</Deterministic>
+        <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+        <ThinCamTargetFrameworks Condition="'$(ThinCamTargetFrameworks)' == ''">net10.0;net10.0-android;net10.0-ios</ThinCamTargetFrameworks>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    </PropertyGroup>
+    <!-- Assembly Info -->
+    <PropertyGroup>
+        <GitSHA>nogit</GitSHA>
+    </PropertyGroup>
+    <PropertyGroup>
+        <Product>ThinCam</Product>
+        <Description>Thin, platform-native camera frame capture and camera controls for .NET.</Description>
+        <Authors>Thilo Viereck</Authors>
+        <Company></Company>
+        <Copyright>Copyright &#169; Thilo Viereck 2026-$([System.DateTime]::Now.ToString(`yyyy`))</Copyright>
+        <DefaultLanguage>en-US</DefaultLanguage>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/profix898/ThinCam</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/profix898/ThinCam</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+    <!-- Packaging -->
+    <PropertyGroup>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <!--<IncludeSymbols>true</IncludeSymbols>
+          <SymbolPackageFormat>snupkg</SymbolPackageFormat>-->
+    </PropertyGroup>
+    <!-- NuGet Assets -->
+    <ItemGroup>
+        <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" Visible="false" PackagePath="/" Link="README.md"/>
+    </ItemGroup>
 </Project>

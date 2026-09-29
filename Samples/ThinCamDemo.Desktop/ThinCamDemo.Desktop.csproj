@@ -1,26 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <LangVersion>12</LangVersion>
-    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ThinCamDemoRuntimeIdentifier Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</ThinCamDemoRuntimeIdentifier>
-    <ThinCamDemoRuntimeIdentifier Condition="'$(ThinCamDemoRuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</ThinCamDemoRuntimeIdentifier>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>12</LangVersion>
+        <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ThinCamDemoRuntimeIdentifier Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</ThinCamDemoRuntimeIdentifier>
+        <ThinCamDemoRuntimeIdentifier Condition="'$(ThinCamDemoRuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</ThinCamDemoRuntimeIdentifier>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
-    <ProjectReference Include="../ThinCamDemo/ThinCamDemo.csproj" AdditionalProperties="ThinCamTargetFrameworks=net10.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Avalonia.Desktop"/>
+        <PackageReference Include="SkiaSharp.NativeAssets.Linux"/>
+        <ProjectReference Include="../ThinCamDemo/ThinCamDemo.csproj" AdditionalProperties="ThinCamTargetFrameworks=net10.0"/>
+    </ItemGroup>
 
-  <ItemGroup Condition="Exists('../../Build/Native/runtimes/$(ThinCamDemoRuntimeIdentifier)/native')">
-    <Content Include="../../Build/Native/runtimes/$(ThinCamDemoRuntimeIdentifier)/native/*"
-             Link="runtimes/$(ThinCamDemoRuntimeIdentifier)/native/%(Filename)%(Extension)"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest" />
-  </ItemGroup>
+    <ItemGroup Condition="Exists('../../Build/Native/runtimes/$(ThinCamDemoRuntimeIdentifier)/native')">
+        <Content Include="../../Build/Native/runtimes/$(ThinCamDemoRuntimeIdentifier)/native/*"
+                 Link="runtimes/$(ThinCamDemoRuntimeIdentifier)/native/%(Filename)%(Extension)"
+                 CopyToOutputDirectory="PreserveNewest"
+                 CopyToPublishDirectory="PreserveNewest"/>
+    </ItemGroup>
 </Project>

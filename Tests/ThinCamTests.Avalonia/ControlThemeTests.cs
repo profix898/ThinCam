@@ -1,8 +1,6 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Styling;
-using Avalonia.VisualTree;
 using ThinCam.Avalonia;
 using static ThinCamTests.Avalonia.VisualTestHelpers;
 
@@ -118,8 +116,8 @@ public sealed class ControlThemeTests
     /// template carries no error element.
     /// </summary>
     [TestMethod]
-    public void Failed_operations_set_the_error_state_and_clear_on_success() =>
-        HeadlessAvalonia.Run(() =>
+    public void Failed_operations_set_the_error_state_and_clear_on_success()
+        => HeadlessAvalonia.Run(() =>
         {
             var controls = new CameraControlsView();
             Show(controls);
@@ -146,8 +144,8 @@ public sealed class ControlThemeTests
     /// custom templates.
     /// </summary>
     [TestMethod]
-    public void Editor_bounds_are_exposed_as_properties() =>
-        HeadlessAvalonia.Run(() =>
+    public void Editor_bounds_are_exposed_as_properties()
+        => HeadlessAvalonia.Run(() =>
         {
             var controls = new CameraControlsView();
             Show(controls);
@@ -158,9 +156,7 @@ public sealed class ControlThemeTests
             Assert.AreEqual(0.01d, controls.LightLevelStep, 0.0001);
         });
 
-    private static void RaiseError(CameraControlsView controls, Exception exception) =>
-        Invoke(controls, "RaiseError", exception);
+    private static void RaiseError(CameraControlsView controls, Exception exception) => Invoke(controls, "RaiseError", exception);
 
-    private static void RaiseStatus(CameraControlsView controls, string message) =>
-        Invoke(controls, "RaiseStatus", message);
+    private static void RaiseStatus(CameraControlsView controls, string message) => Invoke(controls, "RaiseStatus", message);
 }

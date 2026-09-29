@@ -27,7 +27,7 @@ dotnet add package ThinCam
 dotnet add package ThinCam.SkiaSharp
 ```
 
-The adapter currently references SkiaSharp `4.150.1`. Desktop applications must ensure that the appropriate SkiaSharp native assets are available. Avalonia applications normally receive a Skia runtime through Avalonia's Skia backend; a headless Linux application may need `SkiaSharp.NativeAssets.Linux` or `SkiaSharp.NativeAssets.Linux.NoDependencies`.
+The adapter currently references SkiaSharp `4.x`. Desktop applications must ensure that the appropriate SkiaSharp native assets are available. Avalonia applications normally receive a Skia runtime through Avalonia's Skia backend; a headless Linux application may need `SkiaSharp.NativeAssets.Linux` or `SkiaSharp.NativeAssets.Linux.NoDependencies`.
 
 ## Raw conversion
 
@@ -230,25 +230,3 @@ The adapter throws:
 - `ArgumentException` for invalid dimensions, stride, frame size, or destination bitmap shape and color type.
 - `ArgumentOutOfRangeException` for unknown transform flags or encoding quality outside 0 through 100.
 - `InvalidOperationException` when Skia cannot expose writable pixels, copy a snapshot, or encode an image.
-
-## Testing
-
-`Tests/ThinCamTests.SkiaSharp` covers:
-
-- Source stride and row padding.
-- BGRA channel order and opaque alpha.
-- 90-degree dimension and coordinate mapping.
-- Mirroring after rotation.
-- Destination validation.
-- Transformed `SKImage` dimensions.
-- PNG encoding.
-- Reusable buffer publication and snapshots.
-
-Run on Linux with:
-
-```bash
-dotnet test Tests/ThinCamTests.SkiaSharp/ThinCamTests.SkiaSharp.csproj \
-  -c Release
-```
-
-The test project includes `SkiaSharp.NativeAssets.Linux.NoDependencies` for its Linux runtime. Production applications should select the native asset package appropriate for their deployment environment.

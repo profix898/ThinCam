@@ -7,6 +7,7 @@ using Avalonia.Styling;
 using ThinCam.Avalonia;
 using ThinCamDemo.Services;
 using ThinCamDemo.ViewModels;
+
 // Aliased because Android.App.Application is also in scope for the net10.0-android target.
 using AvaloniaApplication = Avalonia.Application;
 
@@ -15,7 +16,7 @@ namespace ThinCamDemo.Views;
 /// <summary>Displays and manages the main camera demo view.</summary>
 public sealed partial class MainView : UserControl, IAsyncDisposable
 {
-    private readonly SemaphoreSlim _lifecycleGate = new(1, 1);
+    private readonly SemaphoreSlim _lifecycleGate = new SemaphoreSlim(1, 1);
     private IActivatableLifetime? _activatableLifetime;
     private int _initialized;
     private int _disposed;

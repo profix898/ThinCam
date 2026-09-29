@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
@@ -230,17 +231,17 @@ public class CameraControlsView : TemplatedControl, INotifyDataErrorInfo
     /// <summary>Defines the read-only <see cref="ManualExposureMinimum" /> property.</summary>
     public static readonly DirectProperty<CameraControlsView, decimal> ManualExposureMinimumProperty =
         AvaloniaProperty.RegisterDirect<CameraControlsView, decimal>(nameof(ManualExposureMinimum),
-                                                                      static o => o.ManualExposureMinimum);
+                                                                     static o => o.ManualExposureMinimum);
 
     /// <summary>Defines the read-only <see cref="ManualExposureMaximum" /> property.</summary>
     public static readonly DirectProperty<CameraControlsView, decimal> ManualExposureMaximumProperty =
         AvaloniaProperty.RegisterDirect<CameraControlsView, decimal>(nameof(ManualExposureMaximum),
-                                                                      static o => o.ManualExposureMaximum);
+                                                                     static o => o.ManualExposureMaximum);
 
     /// <summary>Defines the read-only <see cref="ManualExposureStep" /> property.</summary>
     public static readonly DirectProperty<CameraControlsView, decimal> ManualExposureStepProperty =
         AvaloniaProperty.RegisterDirect<CameraControlsView, decimal>(nameof(ManualExposureStep),
-                                                                      static o => o.ManualExposureStep);
+                                                                     static o => o.ManualExposureStep);
 
     /// <summary>Defines the read-only <see cref="IsoMinimum" /> property.</summary>
     public static readonly DirectProperty<CameraControlsView, decimal> IsoMinimumProperty =
@@ -257,32 +258,32 @@ public class CameraControlsView : TemplatedControl, INotifyDataErrorInfo
     /// <summary>Defines the read-only <see cref="FocusPositionMinimum" /> property.</summary>
     public static readonly DirectProperty<CameraControlsView, double> FocusPositionMinimumProperty =
         AvaloniaProperty.RegisterDirect<CameraControlsView, double>(nameof(FocusPositionMinimum),
-                                                                     static o => o.FocusPositionMinimum);
+                                                                    static o => o.FocusPositionMinimum);
 
     /// <summary>Defines the read-only <see cref="FocusPositionMaximum" /> property.</summary>
     public static readonly DirectProperty<CameraControlsView, double> FocusPositionMaximumProperty =
         AvaloniaProperty.RegisterDirect<CameraControlsView, double>(nameof(FocusPositionMaximum),
-                                                                     static o => o.FocusPositionMaximum);
+                                                                    static o => o.FocusPositionMaximum);
 
     /// <summary>Defines the read-only <see cref="FocusPositionStep" /> property.</summary>
     public static readonly DirectProperty<CameraControlsView, double> FocusPositionStepProperty =
         AvaloniaProperty.RegisterDirect<CameraControlsView, double>(nameof(FocusPositionStep),
-                                                                     static o => o.FocusPositionStep);
+                                                                    static o => o.FocusPositionStep);
 
     /// <summary>Defines the read-only <see cref="LightLevelMinimum" /> property.</summary>
     public static readonly DirectProperty<CameraControlsView, double> LightLevelMinimumProperty =
         AvaloniaProperty.RegisterDirect<CameraControlsView, double>(nameof(LightLevelMinimum),
-                                                                     static o => o.LightLevelMinimum);
+                                                                    static o => o.LightLevelMinimum);
 
     /// <summary>Defines the read-only <see cref="LightLevelMaximum" /> property.</summary>
     public static readonly DirectProperty<CameraControlsView, double> LightLevelMaximumProperty =
         AvaloniaProperty.RegisterDirect<CameraControlsView, double>(nameof(LightLevelMaximum),
-                                                                     static o => o.LightLevelMaximum);
+                                                                    static o => o.LightLevelMaximum);
 
     /// <summary>Defines the read-only <see cref="LightLevelStep" /> property.</summary>
     public static readonly DirectProperty<CameraControlsView, double> LightLevelStepProperty =
         AvaloniaProperty.RegisterDirect<CameraControlsView, double>(nameof(LightLevelStep),
-                                                                     static o => o.LightLevelStep);
+                                                                    static o => o.LightLevelStep);
 
     /// <summary>Defines the read-only <see cref="LastError" /> property.</summary>
     public static readonly DirectProperty<CameraControlsView, string?> LastErrorProperty =
@@ -293,7 +294,7 @@ public class CameraControlsView : TemplatedControl, INotifyDataErrorInfo
         AvaloniaProperty.RegisterDirect<CameraControlsView, bool>(nameof(HasError), static o => o.HasError);
 
     private readonly Dictionary<string, string> _validationErrors = [];
-    private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
     private readonly DispatcherTimer _debounce;
 
     private CancellationTokenSource? _loadCancellation;
@@ -1130,8 +1131,7 @@ public class CameraControlsView : TemplatedControl, INotifyDataErrorInfo
         return durationValid && isoValid;
     }
 
-    private static bool IsInRange(decimal value, decimal minimum, decimal maximum) =>
-        value >= minimum && value <= maximum;
+    private static bool IsInRange(decimal value, decimal minimum, decimal maximum) => value >= minimum && value <= maximum;
 
     private void SetValidationError(string propertyName, string? message)
     {
@@ -1187,8 +1187,8 @@ public class CameraControlsView : TemplatedControl, INotifyDataErrorInfo
     }
 
     /// <inheritdoc />
-    IEnumerable INotifyDataErrorInfo.GetErrors(string? propertyName) =>
-        propertyName is not null && _validationErrors.TryGetValue(propertyName, out var message)
+    IEnumerable INotifyDataErrorInfo.GetErrors(string? propertyName)
+        => propertyName is not null && _validationErrors.TryGetValue(propertyName, out var message)
             ? new[] { message }
             : Array.Empty<string>();
 
@@ -1209,7 +1209,7 @@ public class CameraControlsView : TemplatedControl, INotifyDataErrorInfo
         catch (Exception exception)
         {
             // Reporting a resync failure would recurse; the original error is already surfaced.
-            System.Diagnostics.Trace.TraceError($"Could not resync camera control state: {exception}");
+            Trace.TraceError($"Could not resync camera control state: {exception}");
         }
         finally
         {
@@ -1233,7 +1233,7 @@ public class CameraControlsView : TemplatedControl, INotifyDataErrorInfo
             PseudoClasses.Remove(pseudoClass);
     }
 
-    private SuppressScope Suppress() => new(this);
+    private SuppressScope Suppress() => new SuppressScope(this);
 
     #region Nested: SuppressScope
 

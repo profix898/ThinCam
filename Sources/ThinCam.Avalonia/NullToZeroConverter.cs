@@ -24,7 +24,7 @@ namespace ThinCam.Avalonia;
 public sealed class NullToZeroConverter : IValueConverter
 {
     /// <summary>Gets the shared converter instance.</summary>
-    public static NullToZeroConverter Instance { get; } = new();
+    public static NullToZeroConverter Instance { get; } = new NullToZeroConverter();
 
     /// <inheritdoc />
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) => value;

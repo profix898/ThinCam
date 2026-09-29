@@ -91,7 +91,7 @@ public class CameraPreviewSurface : Control
     {
         base.Render(context);
 
-        Rect bounds = new(Bounds.Size);
+        Rect bounds = new Rect(Bounds.Size);
         if (bounds.Width <= 0 || bounds.Height <= 0)
             return;
 
@@ -310,7 +310,7 @@ public class CameraPreviewSurface : Control
             return new SKRect(left, top, left + width, top + height);
         }
 
-        private static SKRect ToSkRect(Rect rect) => new((float) rect.X, (float) rect.Y, (float) rect.Right, (float) rect.Bottom);
+        private static SKRect ToSkRect(Rect rect) => new SKRect((float) rect.X, (float) rect.Y, (float) rect.Right, (float) rect.Bottom);
     }
 
     #endregion

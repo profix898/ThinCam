@@ -10,7 +10,7 @@ namespace ThinCam.Avalonia;
 /// </summary>
 public sealed class CameraPreviewSource : IDisposable
 {
-    private readonly SkiaFrameBuffer _buffer = new();
+    private readonly SkiaFrameBuffer _buffer = new SkiaFrameBuffer();
     private int _hasFrame;
     private int _disposed;
 

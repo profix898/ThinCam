@@ -2,9 +2,13 @@
 
 Optional SkiaSharp adapters for [ThinCam](https://www.nuget.org/packages/ThinCam).
 
-The package converts ThinCam's pooled BGRA32 camera frames into Skia-owned bitmaps and images, applies optional presentation rotation and mirroring, encodes snapshots, and provides a reusable double-buffer for live preview rendering. It does not change the dependency-free ThinCam capture core.
+The package converts ThinCam's pooled BGRA32 camera frames into Skia-owned bitmaps and images, applies optional
+presentation rotation and mirroring, encodes snapshots, and provides a reusable double-buffer for live preview
+rendering. It does not change the dependency-free ThinCam capture core.
 
-On Linux, the host application must also reference either `SkiaSharp.NativeAssets.Linux` or `SkiaSharp.NativeAssets.Linux.NoDependencies`. Windows, macOS, Android, and iOS native assets are selected by the main SkiaSharp package for their platform targets.
+On Linux, the host application must also reference either `SkiaSharp.NativeAssets.Linux` or
+`SkiaSharp.NativeAssets.Linux.NoDependencies`. Windows, macOS, Android, and iOS native assets are selected by the main
+SkiaSharp package for their platform targets.
 
 ```csharp
 using SkiaSharp;
@@ -51,4 +55,5 @@ byte[] jpeg = frame.EncodeToBytes(
     SkiaFrameTransform.Presentation);
 ```
 
-`VideoFrame` remains owned by the caller and must be disposed. Every conversion copies into Skia-owned memory; the package deliberately avoids pinning pooled camera buffers or retaining them beyond their callback lifetime.
+`VideoFrame` remains owned by the caller and must be disposed. Every conversion copies into Skia-owned memory; the
+package deliberately avoids pinning pooled camera buffers or retaining them beyond their callback lifetime.

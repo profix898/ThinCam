@@ -15,8 +15,8 @@ public sealed class CameraControlsStateTests
 {
     /// <summary>Loading capabilities must populate the pickers but select nothing.</summary>
     [TestMethod]
-    public void Capabilities_alone_do_not_select_a_mode() =>
-        HeadlessAvalonia.Run(() =>
+    public void Capabilities_alone_do_not_select_a_mode()
+        => HeadlessAvalonia.Run(() =>
         {
             var controls = new CameraControlsView();
             Show(controls, 700, 900);
@@ -39,8 +39,8 @@ public sealed class CameraControlsStateTests
 
     /// <summary>Capability ranges and defaults must still be adopted for the numeric editors.</summary>
     [TestMethod]
-    public void Capabilities_still_supply_ranges_and_numeric_defaults() =>
-        HeadlessAvalonia.Run(() =>
+    public void Capabilities_still_supply_ranges_and_numeric_defaults()
+        => HeadlessAvalonia.Run(() =>
         {
             var controls = new CameraControlsView();
             Show(controls, 700, 900);
@@ -60,8 +60,8 @@ public sealed class CameraControlsStateTests
 
     /// <summary>A mode the camera reports must be shown, including ContinuousAuto.</summary>
     [TestMethod]
-    public void Reported_modes_are_reflected_including_continuous_auto() =>
-        HeadlessAvalonia.Run(() =>
+    public void Reported_modes_are_reflected_including_continuous_auto()
+        => HeadlessAvalonia.Run(() =>
         {
             var controls = new CameraControlsView();
             var window = Show(controls, 700, 900);
@@ -84,16 +84,11 @@ public sealed class CameraControlsStateTests
             Assert.AreEqual(FocusMode.ContinuousAuto, pickers[1].SelectedItem);
         });
 
-    private static CameraCapabilities WebcamCapabilities() =>
-        new(new ExposureCapabilities(new HashSet<ExposureMode> { ExposureMode.Auto, ExposureMode.Manual },
-                                     new NumericRange<double>(-2, 2, 0, 0.25),
-                                     new NumericRange<TimeSpan>(TimeSpan.FromMilliseconds(1),
-                                                                TimeSpan.FromMilliseconds(100),
-                                                                TimeSpan.FromMilliseconds(20),
-                                                                TimeSpan.FromMilliseconds(1)),
-                                     new NumericRange<double>(100, 800, 200, 10)),
-            new FocusCapabilities(new HashSet<FocusMode> { FocusMode.Auto, FocusMode.ContinuousAuto, FocusMode.Manual },
-                                  new NumericRange<double>(0, 1, 0.5, 0.01)),
-            new ZoomCapabilities(new NumericRange<double>(1, 5, 1, 0.1)),
-            new CameraLightCapabilities(false, false, null));
+    private static CameraCapabilities WebcamCapabilities()
+        => new CameraCapabilities(new ExposureCapabilities(new HashSet<ExposureMode> { ExposureMode.Auto, ExposureMode.Manual }, new NumericRange<double>(-2, 2, 0, 0.25),
+                                                           new NumericRange<TimeSpan>(TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(20),
+                                                                                      TimeSpan.FromMilliseconds(1)), new NumericRange<double>(100, 800, 200, 10)),
+                                  new FocusCapabilities(new HashSet<FocusMode> { FocusMode.Auto, FocusMode.ContinuousAuto, FocusMode.Manual },
+                                                        new NumericRange<double>(0, 1, 0.5, 0.01)), new ZoomCapabilities(new NumericRange<double>(1, 5, 1, 0.1)),
+                                  new CameraLightCapabilities(false, false, null));
 }

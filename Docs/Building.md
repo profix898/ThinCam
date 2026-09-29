@@ -38,13 +38,7 @@ ThinCam is not built as one universal binary. Each native backend must be built 
 
 ### .NET SDK
 
-The project targets .NET 10. Install the SDK from <https://dotnet.microsoft.com/download/dotnet/10.0>.
-The repository does not pin a specific SDK version via `global.json`; any .NET 10 SDK
-(10.0.300 or newer) is sufficient. The `Directory.Build.props` file sets the target
-frameworks (`net10.0;net10.0-android;net10.0-ios`) and the `Directory.Packages.props`
-file manages NuGet package versions centrally. A repo-local `NuGet.config` pins a single
-package source (nuget.org) so restore is hermetic regardless of machine-level sources.
-Install a .NET 10 SDK compatible with this policy. The SDK builds the .NET 10 desktop and mobile targets.
+The project targets .NET 10. Install the SDK from <https://dotnet.microsoft.com/download/dotnet/10.0>. The repository does not pin a specific SDK version via `global.json`; any .NET 10 SDK (10.0.300 or newer) is sufficient. The `Directory.Build.props` file sets the target frameworks (`net10.0;net10.0-android;net10.0-ios`) and the `Directory.Packages.props` file manages NuGet package versions centrally. A repo-local `NuGet.config` pins a single package source (nuget.org) so restore is hermetic regardless of machine-level sources. Install a .NET 10 SDK compatible with this policy. The SDK builds the .NET 10 desktop and mobile targets.
 
 Check the selected SDK:
 
@@ -81,18 +75,18 @@ Build/Native/runtimes/<rid>/native/<library>
 
 Expected files are:
 
-| Runtime identifier | File |
-|---|---|
-| `win-x64` | `thincam.dll` |
-| `win-arm64` | `thincam.dll` |
-| `linux-x64` | `libthincam.so` |
-| `osx-x64` | `libthincam.dylib` |
-| `osx-arm64` | `libthincam.dylib` |
-| `android-arm64` | `libthincam.so` |
-| `android-x64` | `libthincam.so` |
-| `ios-arm64` | `libthincam.a` |
-| `iossimulator-arm64` | `libthincam.a` |
-| `iossimulator-x64` | `libthincam.a` |
+| Runtime identifier   | File               |
+| -------------------- | ------------------ |
+| `win-x64`            | `thincam.dll`      |
+| `win-arm64`          | `thincam.dll`      |
+| `linux-x64`          | `libthincam.so`    |
+| `osx-x64`            | `libthincam.dylib` |
+| `osx-arm64`          | `libthincam.dylib` |
+| `android-arm64`      | `libthincam.so`    |
+| `android-x64`        | `libthincam.so`    |
+| `ios-arm64`          | `libthincam.a`     |
+| `iossimulator-arm64` | `libthincam.a`     |
+| `iossimulator-x64`   | `libthincam.a`     |
 
 Inspect staged files with:
 
@@ -315,13 +309,13 @@ chmod +x Build/build-macos.sh
 
 The script builds:
 
-| Target | Architecture | Staged RID |
-|---|---|---|
-| macOS | arm64 | `osx-arm64` |
-| macOS | x86_64 | `osx-x64` |
-| iOS device | arm64 | `ios-arm64` |
-| iOS simulator | arm64 | `iossimulator-arm64` |
-| iOS simulator | x86_64 | `iossimulator-x64` |
+| Target        | Architecture | Staged RID           |
+| ------------- | ------------ | -------------------- |
+| macOS         | arm64        | `osx-arm64`          |
+| macOS         | x86_64       | `osx-x64`            |
+| iOS device    | arm64        | `ios-arm64`          |
+| iOS simulator | arm64        | `iossimulator-arm64` |
+| iOS simulator | x86_64       | `iossimulator-x64`   |
 
 macOS outputs are dynamic libraries. iOS outputs are static archives.
 
@@ -437,20 +431,13 @@ Install:
 - CMake 3.22 or newer.
 - Ninja.
 
-The build scripts discover the NDK automatically and only fall back to the
-steps below when discovery fails. They probe, in order:
+The build scripts discover the NDK automatically and only fall back to the steps below when discovery fails. They probe, in order:
 
 1. `ANDROID_NDK_HOME`, if it points at a valid NDK.
-2. `$ANDROID_HOME` / `$ANDROID_SDK_ROOT` and the default SDK locations, using
-   the newest `ndk/<version>` found.
+2. `$ANDROID_HOME` / `$ANDROID_SDK_ROOT` and the default SDK locations, using the newest `ndk/<version>` found.
 3. The legacy `ndk-bundle` directory.
 
-On Windows, Ninja is additionally discovered from a Visual Studio installation,
-so an Android build usually needs no setup at all. If no NDK is found the
-Windows script offers to install the pinned revision through `sdkmanager`
-after asking for consent. Use `-InstallNdk` to accept up front, `-NoInstall`
-to refuse, or `-SkipAndroid` (`--skip-android` for the shell scripts) to leave
-the Android libraries out entirely.
+On Windows, Ninja is additionally discovered from a Visual Studio installation, so an Android build usually needs no setup at all. If no NDK is found the Windows script offers to install the pinned revision through `sdkmanager` after asking for consent. Use `-InstallNdk` to accept up front, `-NoInstall` to refuse, or `-SkipAndroid` (`--skip-android` for the shell scripts) to leave the Android libraries out entirely.
 
 To pin the NDK explicitly, set `ANDROID_NDK_HOME` to the NDK root:
 
@@ -483,10 +470,10 @@ chmod +x Build/build-macos.sh
 
 The script builds API 24 with static libc++ for:
 
-| Android ABI | NuGet RID | Output |
-|---|---|---|
+| Android ABI | NuGet RID       | Output          |
+| ----------- | --------------- | --------------- |
 | `arm64-v8a` | `android-arm64` | `libthincam.so` |
-| `x86_64` | `android-x64` | `libthincam.so` |
+| `x86_64`    | `android-x64`   | `libthincam.so` |
 
 ### 7.4 Manual arm64 build
 
@@ -872,9 +859,7 @@ Before a full release package, stage every supported native artifact and verify 
 
 ### 10.2 Pack with the script
 
-Package versioning is driven by [MinVer](https://github.com/adamralph/minver) from git tags
-(prefix `v`). Create a tag like `v0.4.2` to produce a release package, or run without a tag
-for a pre-release (`0.1.0-dev.N`).
+Package versioning is driven by [MinVer](https://github.com/adamralph/minver) from git tags (prefix `v`). Create a tag like `v0.4.2` to produce a release package, or run without a tag for a pre-release (`0.1.0-dev.N`).
 
 ```bash
 chmod +x Build/build-macos.sh
@@ -1113,24 +1098,3 @@ Confirm that the application references the correct SkiaSharp native assets for 
 ### macOS camera prompt does not appear
 
 Run the desktop demo as an application bundle containing `NSCameraUsageDescription`; a loose executable does not provide the required purpose string reliably. Use `Build/run-demo-macos.sh` for source testing. Reset camera privacy state in macOS settings or with the platform privacy tools when retesting denial/allow flows.
-
-## 14. Release build checklist
-
-Before publishing a cross-platform package:
-
-- [ ] Build Linux x64 native backend and run conversion tests.
-- [ ] Build Windows x64 and ARM64 native DLLs.
-- [ ] Build macOS x64 and ARM64 dylibs.
-- [ ] Build iOS device and both simulator static libraries.
-- [ ] Build Android arm64 and x64 native libraries.
-- [ ] Verify all nine ABI exports in each native output.
-- [ ] Build `net10.0` managed target with warnings as errors.
-- [ ] Build `net10.0-android` managed target.
-- [ ] Build `net10.0-ios` for at least one simulator RID and `ios-arm64`.
-- [ ] Run the desktop sample on each desktop OS with real hardware.
-- [ ] Run Android and iOS host apps on physical devices.
-- [ ] Test permission allow/deny/revoke.
-- [ ] Test device busy and disconnect behavior.
-- [ ] Pack on a machine with all required workloads.
-- [ ] Inspect the `.nupkg` runtime assets and build-transitive targets.
-- [ ] Install the package into clean consumer projects and publish per RID.

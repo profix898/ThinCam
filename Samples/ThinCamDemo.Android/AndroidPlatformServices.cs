@@ -8,7 +8,7 @@ namespace ThinCamDemo.Android;
 
 internal sealed class AndroidPlatformServices : IPlatformServices
 {
-    private readonly SemaphoreSlim _permissionGate = new(1, 1);
+    private readonly SemaphoreSlim _permissionGate = new SemaphoreSlim(1, 1);
     private WeakReference<Activity>? _activity;
 
     #region IPlatformServices

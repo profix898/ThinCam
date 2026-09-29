@@ -16,11 +16,11 @@ namespace ThinCamDemo.ViewModels;
 public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 {
     private readonly IPlatformServices _platformServices;
-    private readonly SemaphoreSlim _lifecycleGate = new(1, 1);
+    private readonly SemaphoreSlim _lifecycleGate = new SemaphoreSlim(1, 1);
     private readonly DispatcherTimer _statsTimer;
 
     private readonly List<string> _logLines = [];
-    private readonly object _disposeSync = new();
+    private readonly object _disposeSync = new object();
     private Task? _disposeTask;
     private CancellationTokenSource? _captureCancellation;
     private Task? _captureTask;
@@ -1306,7 +1306,7 @@ public sealed class MainViewModel : ObservableObject, IAsyncDisposable
 
     private AsyncCommand CreateCommand(Func<CancellationToken, Task> execute,
                                        Func<bool>? canExecute = null)
-        => new(execute, canExecute, exception => HandleError("Command failed", exception));
+        => new AsyncCommand(execute, canExecute, exception => HandleError("Command failed", exception));
 
     private Task CancelCommandsAsync()
     {

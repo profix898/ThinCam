@@ -1,29 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>$(ThinCamTargetFrameworks)</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <LangVersion>12</LangVersion>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>ThinCam.Avalonia</PackageId>
-    <Description>Reusable Avalonia Skia preview controls and presentation sources for ThinCam.</Description>
-    <Authors>ThinCam contributors</Authors>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>camera;webcam;avalonia;skiasharp;preview;control;video</PackageTags>
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>$(ThinCamTargetFrameworks)</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>12</LangVersion>
+        <Description>Reusable Avalonia Skia preview controls and presentation sources for ThinCam.</Description>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Avalonia" />
-    <PackageReference Include="Avalonia.Skia" />
-    <ProjectReference Include="../ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Avalonia"/>
+        <PackageReference Include="Avalonia.Skia"/>
+        <ProjectReference Include="../ThinCam.SkiaSharp/ThinCam.SkiaSharp.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Update="$(MSBuildThisFileDirectory)../../README.md" Pack="false" />
-    <None Include="README.md" Pack="true" PackagePath="/" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Update="$(MSBuildThisFileDirectory)../../README.md" Pack="false"/>
+        <None Include="README.md" Pack="true" PackagePath="/"/>
+    </ItemGroup>
 </Project>

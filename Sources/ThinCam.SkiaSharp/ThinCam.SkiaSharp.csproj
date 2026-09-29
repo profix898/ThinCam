@@ -1,29 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>$(ThinCamTargetFrameworks)</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>12</LangVersion>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>ThinCam.SkiaSharp</PackageId>
-    <Description>Stride-aware SkiaSharp conversion, presentation transforms, encoding, and reusable preview buffers for ThinCam frames.</Description>
-    <Authors>ThinCam contributors</Authors>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>camera;webcam;skiasharp;bitmap;image;preview;jpeg;png;webp</PackageTags>
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>$(ThinCamTargetFrameworks)</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>12</LangVersion>
+        <Description>Stride-aware SkiaSharp conversion, presentation transforms, encoding, and reusable preview buffers for ThinCam frames.</Description>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../ThinCam/ThinCam.csproj" />
-    <PackageReference Include="SkiaSharp" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="../ThinCam/ThinCam.csproj"/>
+        <PackageReference Include="SkiaSharp"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Update="$(MSBuildThisFileDirectory)../../README.md" Pack="false" />
-    <None Include="README.md" Pack="true" PackagePath="/" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Update="$(MSBuildThisFileDirectory)../../README.md" Pack="false"/>
+        <None Include="README.md" Pack="true" PackagePath="/"/>
+    </ItemGroup>
 </Project>
